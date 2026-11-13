@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#0f1115" />
+<title>研心 · 考研倒计时</title>
+<style>
+:root{
+  --bg-1:#0f1115;
+  --bg-2:#1a1d24;
+  --card-bg:#181b22;
+  --card-stroke:rgba(255,255,255,0.06);
+  --text:#f5f6f8;
+  --text-dim:#9aa0aa;
+  --text-faint:#5a606b;
+  --accent:#ff6b5b;
+  --accent-soft:rgba(255,107,91,0.15);
+  --ok:#4ade80;
+  --radius:28px;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,sans-serif;
+  background:radial-gradient(120% 80% at 50% 0%,#22262f 0%,#0f1115 60%);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px 16px calc(24px + env(safe-area-inset-bottom));
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- App header ---------- */
+.app-header{
+  width:100%;max-width:760px;
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:18px;
+}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-logo{
+  width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,#ff6b5b,#ffb199);
+  display:grid;place-items:center;font-size:18px;font-weight:700;
+  box-shadow:0 6px 18px rgba(255,107,91,0.25);
+}
+.brand-name{font-size:18px;font-weight:700;letter-spacing:1px}
+.brand-tag{font-size:12px;color:var(--text-dim)}
+
+/* ---------- Card ---------- */
+.card{
+  width:100%;max-width:760px;
+  background:linear-gradient(180deg,#1d212b 0%,#15181f 100%);
+  border:1px solid var(--card-stroke);
+  border-radius:var(--radius);
+  box-shadow:0 24px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+  overflow:hidden;
+  position:relative;
+}
+/* portrait: vertical rhythm */
+.card-inner{
+  display:flex;flex-direction:column;align-items:center;
+  padding:36px 28px 28px;
+  gap:22px;
+  transition:all .5s cubic-bezier(.4,0,.2,1);
+}
+
+/* countdown display */
+.cd-label{
+  font-size:13px;letter-spacing:3px;color:var(--text-faint);
+  text-transform:uppercase;
+}
+.cd-target{
+  font-size:16px;color:var(--text-dim);font-weight:500;
+  display:flex;align-items:center;gap:8px;
+}
+.cd-target .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+
+.cd{
+  display:flex;align-items:baseline;gap:6px;
+  margin-top:4px;
+}
+.cd .num{
+  font-size:clamp(56px,18vw,120px);
+  font-weight:200;
+  letter-spacing:-2px;
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+  color:var(--text);
+  background:linear-gradient(180deg,#fff,#c9ced8);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.cd .unit{font-size:14px;color:var(--text-dim);margin-right:10px}
+.cd .sub{font-size:clamp(20px,6vw,36px);font-weight:300;color:var(--text-dim);font-variant-numeric:tabular-nums}
+
+.cd-progress{
+  width:100%;max-width:420px;height:4px;border-radius:4px;
+  background:rgba(255,255,255,0.06);overflow:hidden;margin-top:6px;
+}
+.cd-progress > i{
+  display:block;height:100%;width:0%;
+  background:linear-gradient(90deg,#ff6b5b,#ffb199);
+  border-radius:4px;transition:width 1s linear;
+}
+
+.cd-meta{
+  display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-top:4px;
+}
+.cd-meta span{font-size:13px;color:var(--text-faint)}
+.cd-meta b{color:var(--text-dim);font-weight:500}
+
+/* actions */
+.actions{
+  display:flex;gap:10px;flex-wrap:wrap;justify-content:center;
+  margin-top:6px;
+}
+.btn{
+  appearance:none;border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.04);color:var(--text);
+  padding:10px 18px;border-radius:14px;font-size:14px;font-weight:500;
+  cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+  transition:all .25s ease;min-height:42px;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#1a0d0b}
+.btn.primary:hover{background:#ff7f70}
+.btn .ic{font-size:15px}
+
+/* orientation hint */
+.hint{
+  margin-top:14px;font-size:12px;color:var(--text-faint);
+  display:flex;align-items:center;gap:6px;
+}
+
+/* ---------- Sheet (date picker) ---------- */
+.sheet-mask{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
+  z-index:50;opacity:0;pointer-events:none;transition:opacity .3s ease;
+}
+.sheet-mask.open{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:51;
+  background:#1a1e27;border-radius:24px 24px 0 0;
+  border:1px solid var(--card-stroke);
+  padding:22px 20px calc(24px + env(safe-area-inset-bottom));
+  transform:translateY(100%);transition:transform .38s cubic-bezier(.22,1,.36,1);
+  max-width:760px;margin:0 auto;
+}
+.sheet.open{transform:translateY(0)}
+.sheet h3{font-size:16px;font-weight:600;margin-bottom:14px}
+.field{margin-bottom:14px}
+.field label{font-size:12px;color:var(--text-dim);display:block;margin-bottom:6px;letter-spacing:.5px}
+.field input{
+  width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:12px 14px;color:var(--text);font-size:15px;
+  outline:none;transition:border .2s;-webkit-appearance:none;appearance:none;
+  color-scheme:dark;
+}
+.field input:focus{border-color:var(--accent)}
+.field-row{display:flex;gap:10px}
+.field-row .field{flex:1}
+.sheet-actions{display:flex;gap:10px;margin-top:18px}
+.sheet-actions .btn{flex:1;justify-content:center}
+.ghost{background:transparent}
+
+/* landscape layout on phone */
+@media (orientation:landscape) and (max-width: 900px){
+  .card-inner{
+    flex-direction:row;align-items:center;justify-content:space-between;
+    padding:22px 30px;gap:28px;
+  }
+  .card-inner .cd-side{order:2}
+  .card-inner .ctrl-side{order:1;display:flex;flex-direction:column;gap:14px}
+  .cd .num{font-size:clamp(44px,13vw,92px)}
+  .cd .sub{font-size:clamp(16px,5vw,30px)}
+  .hint{margin-top:10px}
+}
+
+/* desktop hint */
+@media (min-width: 900px){
+  .card{max-width:860px}
+  .app-header{max-width:860px}
+}
+
+/* subtle float animation on accent */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.cd-target .dot{animation:pulse 2s ease-in-out infinite}
+
+.done{
+  font-size:20px;color:var(--ok);font-weight:500;letter-spacing:1px;
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-logo">研</div>
+    <div>
+      <div class="brand-name">研心</div>
+      <div class="brand-tag">专注 · 倒计时</div>
+    </div>
+  </div>
+  <button class="btn ghost" id="rotateBtn" title="切换横竖屏" aria-label="切换横竖屏">
+    <span class="ic">⟳</span><span id="rotateLabel">横屏</span>
+  </button>
+</header>
+
+<main class="card" id="card">
+  <div class="card-inner" id="cardInner">
+    <!-- Countdown -->
+    <div class="cd-side">
+      <div class="cd-label">考研倒计时</div>
+      <div class="cd-target"><span class="dot"></span><span id="targetLabel">目标日期</span></div>
+
+      <div class="cd" id="cd" aria-live="polite">
+        <span class="num" id="days">00</span><span class="unit">天</span>
+        <span class="sub" id="hm">00 : 00</span>
+      </div>
+
+      <div class="cd-progress"><i id="bar"></i></div>
+
+      <div class="cd-meta">
+        <span>已坚持 <b id="elapsed">0</b> 天</span>
+        <span>距目标还有 <b id="remain">0</b> 天</span>
+      </div>
+
+      <div id="doneMsg" style="display:none" class="done">🎉 目标已到达，加油冲刺！</div>
+    </div>
+
+    <!-- Controls -->
+    <div class="ctrl-side">
+      <div class="actions">
+        <button class="btn primary" id="customBtn"><span class="ic">✎</span>自定义时间</button>
+        <button class="btn" id="resetBtn"><span class="ic">↺</span>默认考试日</button>
+      </div>
+      <div class="hint" id="orientationHint"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Date sheet -->
+<div class="sheet-mask" id="mask"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <h3 id="sheetTitle">自定义倒计时目标</h3>
+  <div class="field-row">
+    <div class="field">
+      <label for="fDate">目标日期</label>
+      <input type="date" id="fDate" />
+    </div>
+    <div class="field">
+      <label for="fTime">开始时间</label>
+      <input type="time" id="fTime" value="09:00" />
+    </div>
+  </div>
+  <div class="field">
+    <label>考试名称（可选）</label>
+    <input type="text" id="fName" placeholder="例：2027 考研初试" maxlength="20" />
+  </div>
+  <div class="field">
+    <label>起始日期（用于计算「已坚持」）</label>
+    <input type="date" id="fStart" />
+  </div>
+  <div class="sheet-actions">
+    <button class="btn ghost" id="cancelBtn">取消</button>
+    <button class="btn primary" id="saveBtn">保存</button>
+  </div>
+</section>
+
+<script>
+(function(){
+  const LS_KEY='yanxin.cd.v1';
+  const $=id=>document.getElementById(id);
+
+  /* ---------- default exam date: 考研初试一般在 12 月下旬 ---------- */
+  function defaultExamDate(){
+    const now=new Date();
+    let y=now.getFullYear();
+    // 当年 12 月 20 日（周一左右）；若已过，则取下一年
+    let d=new Date(y,11,20,9,0,0);
+    if(d<=now) d=new Date(y+1,11,20,9,0,0);
+    return d;
+  }
+  function defaultStartDate(){
+    // 默认从当年 3 月开始备考
+    const y=new Date().getFullYear();
+    return new Date(y,2,1,0,0,0);
+  }
+
+  /* ---------- state ---------- */
+  const defaultTarget=defaultExamDate();
+  const defaultStart=defaultStartDate();
+  let state=load()||{
+    target:defaultTarget.getTime(),
+    start:defaultStart.getTime(),
+    name:'2027 考研初试',
+    portrait:true // 手机端显示模式
+  };
+  // 强制 target 至少晚于 start
+  if(state.target<=state.start) state.target=defaultTarget.getTime();
+
+  const mask=$('mask'),sheet=$('sheet');
+
+  function load(){
+    try{
+      const raw=localStorage.getItem(LS_KEY);
+      if(!raw) return null;
+      const o=JSON.parse(raw);
+      return o&&typeof o.target==='number'?o:null;
+    }catch(e){return null}
+  }
+  function save(){
+    try{localStorage.setItem(LS_KEY,JSON.stringify(state));}catch(e){}
+  }
+
+  const pad=n=>String(n).padStart(2,'0');
+  function fmtDate(ts){
+    const d=new Date(ts);
+    return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function render(){
+    const now=Date.now();
+    let diff=state.target-now;
+    const reached=diff<=0;
+    diff=Math.max(0,diff);
+    const totalSec=Math.floor(diff/1000);
+    const days=Math.floor(totalSec/86400);
+    const hrs=Math.floor((totalSec%86400)/3600);
+    const min=Math.floor((totalSec%3600)/60);
+    const sec=totalSec%60;
+
+    $('days').textContent=pad(days);
+    $('hm').textContent=`${pad(hrs)} : ${pad(min)}`;
+
+    // 秒级展示（极简：只显示 天 + 时:分，但保留秒用于进度条）
+    $('targetLabel').textContent=`${state.name||'目标'} · ${fmtDate(state.target)}`;
+
+    const elapsedMs=Math.max(0,now-Math.min(state.start,now));
+    $('elapsed').textContent=Math.floor(elapsedMs/86400000);
+    $('remain').textContent=days;
+
+    // progress: 从 start 到 target
+    const totalMs=state.target-state.start;
+    const pct=totalMs>0?Math.min(100,Math.max(0,(now-state.start)/totalMs*100)):100;
+    $('bar').style.width=pct+'%';
+
+    const doneMsg=$('doneMsg');
+    if(reached){
+      doneMsg.style.display='block';
+      $('cd').style.opacity='.35';
+    }else{
+      doneMsg.style.display='none';
+      $('cd').style.opacity='1';
+    }
+
+    updateOrientationHint();
+  }
+
+  /* ---------- orientation ---------- */
+  const cardInner=$('cardInner');
+  function applyMode(){
+    if(state.portrait){
+      cardInner.style.flexDirection='column';
+      cardInner.style.alignItems='center';
+      cardInner.style.justifyContent='flex-start';
+      cardInner.style.gap='22px';
+    }else{
+      // 横屏：左右分栏
+      cardInner.style.flexDirection='row';
+      cardInner.style.alignItems='center';
+      cardInner.style.justifyContent='space-between';
+      cardInner.style.gap='28px';
+    }
+    $('rotateLabel').textContent=state.portrait?'横屏':'竖屏';
+  }
+  function updateOrientationHint(){
+    const h=$('orientationHint');
+    const isPhone=matchMedia('(max-width: 640px)').matches;
+    if(isPhone){
+      h.innerHTML='手机可点击右上 ⟳ 切换 <b>'+ (state.portrait?'横屏':'竖屏')+'</b> 显示';
+    }else{
+      h.innerHTML='电脑端默认横版展示 · 可切换竖版';
+    }
+  }
+
+  $('rotateBtn').addEventListener('click',()=>{
+    state.portrait=!state.portrait;
+    save();applyMode();updateOrientationHint();
+  });
+
+  // 监听系统屏幕旋转（移动端）
+  function onScreenRot(e){
+    // 跟随系统方向
+    const landscape=(e.type==='change'&&window.orientation!==0)||
+      (matchMedia('(orientation: landscape)').matches && e.type==='change');
+    // 简单策略：用户手动切换后不再跟随；若未手动切换则跟随
+    if(state._follow!==false){
+      state.portrait=!matchMedia('(orientation: landscape)').matches;
+      applyMode();updateOrientationHint();
+    }
+  }
+  if('screen'in window&&screen.orientation&&screen.orientation.addEventListener){
+    screen.orientation.addEventListener('change',onScreenRot);
+  }
+  window.addEventListener('orientationchange',onScreenRot);
+
+  // 点击旋转按钮即视为用户手动控制，停止跟随
+  $('rotateBtn').addEventListener('click',()=>{state._follow=false;},{capture:true});
+
+  /* ---------- sheet ---------- */
+  function openSheet(){
+    $('fDate').valueAsDate=new Date(state.target);
+    const t=new Date(state.target);
+    $('fTime').value=pad(t.getHours())+':'+pad(t.getMinutes());
+    $('fName').value=state.name||'';
+    $('fStart').valueAsDate=new Date(state.start);
+    mask.classList.add('open');sheet.classList.add('open');
+  }
+  function closeSheet(){
+    mask.classList.remove('open');sheet.classList.remove('open');
+  }
+  $('customBtn').addEventListener('click',openSheet);
+  $('cancelBtn').addEventListener('click',closeSheet);
+  mask.addEventListener('click',closeSheet);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();});
+
+  $('saveBtn').addEventListener('click',()=>{
+    const dateStr=$('fDate').value;
+    const timeStr=$('fTime').value||'09:00';
+    const nameVal=$('fName').value.trim();
+    const startStr=$('fStart').value;
+    if(!dateStr)return;
+    const [yy,mm,dd]=dateStr.split('-').map(Number);
+    const [hh,mi]=(timeStr||'09:00').split(':').map(Number);
+    const target=new Date(yy,mm-1,dd,hh||9,mi||0);
+    state.target=target.getTime();
+    state.name=nameVal||(state.name||'考研初试');
+    if(startStr){
+      const [sy,sm,sd]=startStr.split('-').map(Number);
+      const start=new Date(sy,sm-1,sd,0,0,0);
+      if(start<target) state.start=start.getTime();
+    }
+    save();render();closeSheet();
+  });
+
+  /* ---------- reset to default exam ---------- */
+  $('resetBtn').addEventListener('click',()=>{
+    state.target=defaultTarget.getTime();
+    state.start=defaultStart.getTime();
+    state.name='2027 考研初试';
+    save();render();
+  });
+
+  /* ---------- tick ---------- */
+  function tick(){render();}
+  setInterval(tick,1000);
+
+  /* ---------- init ---------- */
+  applyMode();
+  // 电脑端默认横版
+  if(matchMedia('(min-width: 900px)').matches){state.portrait=false;applyMode();}
+  tick();
+})();
+</script>
+</body>
+</html>
