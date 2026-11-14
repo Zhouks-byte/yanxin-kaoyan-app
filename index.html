@@ -26,17 +26,18 @@ body{
   overflow-x:hidden;-webkit-font-smoothing:antialiased;
 }
 
+/* ============ 头部 ============ */
 .app-header{
   width:100%;max-width:860px;
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:18px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-bottom:18px;flex-wrap:wrap;
 }
 .brand{display:flex;align-items:center;gap:10px}
 .brand-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ff6b5b,#ffb199);display:grid;place-items:center;font-size:18px;font-weight:700;box-shadow:0 6px 18px rgba(255,107,91,0.25)}
 .brand-name{font-size:18px;font-weight:700;letter-spacing:1px}
 .brand-tag{font-size:12px;color:var(--text-dim)}
 
-/* ---------- 卡片通用 ---------- */
+/* ============ 卡片 ============ */
 .card{
   width:100%;max-width:860px;
   background:linear-gradient(180deg,#1d212b 0%,#15181f 100%);
@@ -47,18 +48,19 @@ body{
   margin-bottom:20px;
 }
 .card-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:18px 22px 0;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:18px 20px;flex-wrap:wrap;
 }
-.card-title{font-size:14px;letter-spacing:2px;color:var(--text-faint);text-transform:uppercase}
-.card-inner{padding:20px 24px 24px}
+.card-title{font-size:13px;letter-spacing:2px;color:var(--text-faint);text-transform:uppercase}
+.card-inner{padding:8px 20px 22px}
 
 .btn{
   appearance:none;border:1px solid rgba(255,255,255,0.08);
   background:rgba(255,255,255,0.04);color:var(--text);
-  padding:10px 18px;border-radius:14px;font-size:14px;font-weight:500;
+  padding:10px 16px;border-radius:14px;font-size:14px;font-weight:500;
   cursor:pointer;display:inline-flex;align-items:center;gap:8px;
   transition:all .25s ease;min-height:42px;-webkit-tap-highlight-color:transparent;
+  flex-shrink:0;
 }
 .btn:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15)}
 .btn:active{transform:scale(.97)}
@@ -67,121 +69,129 @@ body{
 .btn.ghost{background:transparent}
 .btn .ic{font-size:15px}
 
-/* ---------- 倒计时卡片 ---------- */
+/* ============ 倒计时卡片 ============ */
 #cdCard .card-inner{
   display:flex;flex-direction:column;align-items:center;
-  padding:24px 28px 24px;gap:18px;
+  padding:20px 24px;gap:16px;min-width:0;
   transition:all .5s cubic-bezier(.4,0,.2,1);
 }
-.cd-label{font-size:13px;letter-spacing:3px;color:var(--text-faint);text-transform:uppercase}
-.cd-target{font-size:15px;color:var(--text-dim);font-weight:500;display:flex;align-items:center;gap:8px;margin-top:6px}
-.cd-target .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);animation:pulse 2s ease-in-out infinite}
-.cd{display:flex;align-items:baseline;gap:6px;margin-top:2px}
-.cd .num{font-size:clamp(56px,18vw,120px);font-weight:200;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff,#c9ced8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.cd-side{display:flex;flex-direction:column;align-items:center;min-width:0;width:100%}
+.cd-label{font-size:12px;letter-spacing:3px;color:var(--text-faint);text-transform:uppercase}
+.cd-target{font-size:15px;color:var(--text-dim);font-weight:500;display:flex;align-items:center;gap:8px;margin-top:6px;max-width:100%;flex-wrap:wrap;justify-content:center}
+.cd-target .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+.cd{display:flex;align-items:baseline;gap:6px;margin-top:4px;flex-wrap:wrap;justify-content:center}
+.cd .num{font-size:clamp(52px,17vw,110px);font-weight:200;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff,#c9ced8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .cd .unit{font-size:14px;color:var(--text-dim);margin-right:10px}
-.cd .sub{font-size:clamp(20px,6vw,36px);font-weight:300;color:var(--text-dim);font-variant-numeric:tabular-nums}
-.cd-progress{width:100%;max-width:420px;height:4px;border-radius:4px;background:rgba(255,255,255,0.06);overflow:hidden;margin-top:10px}
+.cd .sub{font-size:clamp(18px,5.5vw,34px);font-weight:300;color:var(--text-dim);font-variant-numeric:tabular-nums}
+.cd-progress{width:100%;max-width:420px;height:4px;border-radius:4px;background:rgba(255,255,255,0.06);overflow:hidden;margin-top:12px}
 .cd-progress>i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#ff6b5b,#ffb199);border-radius:4px;transition:width 1s linear}
 .cd-meta{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 .cd-meta span{font-size:13px;color:var(--text-faint)}
 .cd-meta b{color:var(--text-dim);font-weight:500}
-.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px}
-.hint{margin-top:12px;font-size:12px;color:var(--text-faint)}
+.ctrl-side{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;max-width:460px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.hint{margin-top:2px;font-size:12px;color:var(--text-faint)}
 .done{font-size:18px;color:var(--ok);font-weight:500;letter-spacing:1px;margin-top:8px}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-@media (orientation:landscape) and (max-width:900px){
-  #cdCard .card-inner{flex-direction:row;align-items:center;justify-content:space-between;padding:20px 28px;gap:24px}
-  #cdCard .card-inner .cd-side{order:2}
-  #cdCard .card-inner .ctrl-side{order:1;display:flex;flex-direction:column;gap:12px;flex:1}
-  .cd .num{font-size:clamp(44px,13vw,92px)}
+/* 倒计时横屏（手机 landscape 或用户手动切换） */
+#cdCard.layout-landscape .card-inner{
+  flex-direction:row;align-items:center;justify-content:space-between;
+  padding:18px 24px;gap:20px;
 }
+#cdCard.layout-landscape .cd-side{order:2;align-items:flex-start;width:auto;max-width:58%;flex-shrink:1}
+#cdCard.layout-landscape .ctrl-side{order:1;align-items:flex-start;max-width:42%;flex-shrink:1}
+#cdCard.layout-landscape .cd .num{font-size:clamp(40px,10vw,76px)}
+#cdCard.layout-landscape .cd .sub{font-size:clamp(16px,4.5vw,26px)}
+#cdCard.layout-landscape .cd-progress{max-width:280px}
 
-/* ---------- 成绩卡片 ---------- */
-.sub-nav{display:flex;gap:8px;margin:6px 24px 0;flex-wrap:wrap}
-.sub-nav .tab{padding:8px 14px;border-radius:10px;font-size:13px;color:var(--text-dim);background:transparent;border:none;cursor:pointer;transition:all .2s}
+/* ============ 成绩卡片 ============ */
+.sub-nav{display:flex;gap:6px;flex-wrap:wrap}
+.sub-nav .tab{padding:8px 14px;border-radius:10px;font-size:13px;color:var(--text-dim);background:transparent;border:none;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
 .sub-nav .tab.active{background:rgba(255,255,255,0.08);color:var(--text)}
 
-.subject-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
-@media (min-width:700px){.subject-grid{grid-template-columns:repeat(4,1fr)}}
+/* 科目网格 */
+.subject-grid{margin-top:14px;display:flex;flex-direction:column;gap:14px}
+.sg-group-label{font-size:11px;color:var(--text-faint);letter-spacing:2px}
+.sg-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media (min-width:700px){
+  .sg-row{grid-template-columns:repeat(3,1fr)}
+  .sg-row.multi{grid-template-columns:repeat(5,1fr)}
+}
 .subject-card{
   background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
-  border-radius:16px;padding:14px 12px;cursor:pointer;transition:all .2s;
-  display:flex;flex-direction:column;gap:4px;position:relative;
+  border-radius:16px;padding:12px 10px;cursor:pointer;transition:all .2s;
+  display:flex;flex-direction:column;gap:3px;position:relative;min-width:0;
 }
 .subject-card:hover{background:rgba(255,255,255,0.06)}
 .subject-card.selected{border-color:var(--accent);background:var(--accent-soft)}
-.subject-card.selected::after{content:"✓";position:absolute;top:8px;right:10px;color:var(--accent);font-size:14px;font-weight:700}
-.subject-card .s-name{font-size:15px;font-weight:600}
-.subject-card .s-desc{font-size:11px;color:var(--text-faint)}
+.subject-card.selected::after{content:"✓";position:absolute;top:6px;right:8px;color:var(--accent);font-size:13px;font-weight:700}
+.subject-card .s-name{font-size:13px;font-weight:600;line-height:1.3}
+.subject-card .s-desc{font-size:10px;color:var(--text-faint);line-height:1.4}
 
-.sub-select{margin-top:10px}
-.sub-select label{font-size:12px;color:var(--text-dim);display:block;margin-bottom:6px}
-.sub-select select,.sub-select input{
-  width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
-  border-radius:12px;padding:11px 14px;color:var(--text);font-size:15px;outline:none;transition:border .2s;
-  -webkit-appearance:none;appearance:none;color-scheme:dark;
-}
-.sub-select select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239aa0aa' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:34px}
-.sub-select select:focus,.sub-select input:focus{border-color:var(--accent)}
+.sub-select{margin-top:12px}
+.sub-select .field{margin-bottom:0}
 
-.section-block{
-  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
-  border-radius:14px;padding:14px 16px;margin-top:10px;
-}
-.section-block h4{font-size:13px;color:var(--text-dim);margin-bottom:10px;letter-spacing:1px;display:flex;justify-content:space-between}
-.section-block h4 .full{color:var(--text-faint);font-weight:400}
-
-.score-row{display:grid;grid-template-columns:1fr 80px 90px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,0.05)}
+/* 录入 */
+.input-top{display:flex;gap:12px;align-items:flex-end;margin-bottom:6px}
+.input-top .field{flex:1}
+.score-row{display:grid;grid-template-columns:minmax(0,1fr) 72px 72px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,0.05)}
 .score-row:last-child{border-bottom:none}
-.score-row .lbl{font-size:13px;color:var(--text-dim)}
-.score-row .lbl small{display:block;color:var(--text-faint);font-size:11px;margin-top:2px}
+.score-row .lbl{font-size:13px;color:var(--text-dim);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .score-row input{
-  width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
-  border-radius:8px;padding:8px 10px;color:var(--text);font-size:14px;text-align:right;outline:none;
+  width:100%;min-width:0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
+  border-radius:8px;padding:8px 8px;color:var(--text);font-size:14px;text-align:right;outline:none;
   font-variant-numeric:tabular-nums;
 }
 .score-row input:focus{border-color:var(--accent)}
-.score-row .full-lbl{font-size:11px;color:var(--text-faint)}
-
-.total-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding:12px 14px;background:var(--accent-soft);border-radius:12px}
-.total-row .t-lbl{font-size:13px;color:var(--text-dim)}
-.total-row .t-val{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
-
+.score-row .full-lbl{font-size:11px;color:var(--text-faint);text-align:right}
+.section-block{
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
+  border-radius:14px;padding:12px 14px;margin-top:10px;
+}
+.section-block h4{font-size:13px;color:var(--text-dim);margin-bottom:8px;letter-spacing:1px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.section-block h4 .full{color:var(--text-faint);font-weight:400}
+.total-row-highlight{background:var(--accent-soft);border-radius:8px;padding:4px 8px;margin-top:4px}
+.save-score-btn{width:100%;justify-content:center;margin-top:16px}
 .empty-tip{color:var(--text-faint);font-size:14px;text-align:center;padding:40px 0}
 
-/* 分析视图 */
-.analyze-hero{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+/* 分析 */
+.analyze-hero{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
 .analyze-hero .total{display:flex;flex-direction:column}
-.analyze-hero .total .v{font-size:48px;font-weight:200;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff,#c9ced8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.analyze-hero .total .v{font-size:44px;font-weight:200;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff,#c9ced8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .analyze-hero .total .l{font-size:12px;color:var(--text-dim);letter-spacing:2px;margin-top:4px}
 .analyze-hero .meta{font-size:13px;color:var(--text-faint);line-height:1.8}
+.section-label{font-size:12px;color:var(--text-faint);letter-spacing:1px;margin-top:12px}
 
-.bar-chart{display:flex;align-items:flex-end;gap:14px;height:180px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);margin:14px 0}
-.bar-chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
-.bar-chart .bar{width:70%;max-width:48px;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#ff6b5b,#ffb199);position:relative;transition:height .6s cubic-bezier(.4,0,.2,1);min-height:2px}
-.bar-chart .bar .val{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--text-dim);font-variant-numeric:tabular-nums}
-.bar-chart .bar .pct{position:absolute;bottom:-18px;left:0;right:0;text-align:center;font-size:11px;color:var(--text-faint)}
-.bar-chart .col .name{font-size:12px;color:var(--text-dim)}
+.bar-chart{display:flex;align-items:flex-end;gap:12px;height:170px;padding:14px 0 22px;border-bottom:1px solid rgba(255,255,255,0.06);margin:8px 0 0}
+.bar-chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;min-width:0}
+.bar-chart .bar{width:64%;max-width:44px;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#ff6b5b,#ffb199);position:relative;transition:height .6s cubic-bezier(.4,0,.2,1);min-height:2px}
+.bar-chart .bar .val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--text-dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar-chart .col .name{font-size:11px;color:var(--text-dim);margin-top:6px;text-align:center;line-height:1.3;word-break:break-all}
+.bar-chart .pct-label{position:absolute;bottom:-16px;left:0;right:0;text-align:center;font-size:10px;color:var(--text-faint)}
 
-.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--text-faint)}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+.radar-wrap{margin:12px 0;display:flex;flex-direction:column;align-items:center}
+.radar-wrap svg{max-width:260px;width:100%}
+.radar-caption{font-size:12px;color:var(--text-faint);margin-top:6px}
 
-.radar-wrap{margin:18px 0;display:flex;flex-direction:column;align-items:center}
-.radar-wrap svg{max-width:280px;width:100%}
-.radar-caption{font-size:12px;color:var(--text-faint);margin-top:8px}
-
-.breakdown-list{margin-top:14px}
-.breakdown-item{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dashed rgba(255,255,255,0.05);font-size:13px}
-.breakdown-item:last-child{border-bottom:none}
-.breakdown-item .n{color:var(--text-dim)}
+.breakdown-list{margin-top:8px}
+.breakdown-group{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.08)}
+.breakdown-group span:last-child{font-variant-numeric:tabular-nums;color:var(--text-dim);font-weight:400}
+.breakdown-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed rgba(255,255,255,0.05);font-size:12px}
+.breakdown-item .n{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .breakdown-item .s{font-variant-numeric:tabular-nums;color:var(--text);font-weight:500}
-.breakdown-item .m{color:var(--text-faint);font-size:12px}
+.breakdown-item .m{color:var(--text-faint);font-size:11px}
 
-/* ---------- 抽屉 ---------- */
+/* ============ 抽屉 ============ */
 .sheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:50;opacity:0;pointer-events:none;transition:opacity .3s ease}
 .sheet-mask.open{opacity:1;pointer-events:auto}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;background:#1a1e27;border-radius:24px 24px 0 0;border:1px solid var(--card-stroke);padding:22px 20px calc(24px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .38s cubic-bezier(.22,1,.36,1);max-width:860px;margin:0 auto;max-height:88vh;overflow-y:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:51;background:#1a1e27;
+  border-radius:24px 24px 0 0;border:1px solid var(--card-stroke);
+  padding:22px 20px calc(24px + env(safe-area-inset-bottom));
+  transform:translateY(100%);transition:transform .38s cubic-bezier(.22,1,.36,1);
+  max-width:860px;margin:0 auto;max-height:85vh;overflow-y:auto;
+}
 .sheet.open{transform:translateY(0)}
 .sheet h3{font-size:16px;font-weight:600;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
 .sheet h3 .x{cursor:pointer;color:var(--text-faint);font-size:20px;line-height:1;padding:4px}
@@ -189,8 +199,8 @@ body{
 .field label{font-size:12px;color:var(--text-dim);display:block;margin-bottom:6px;letter-spacing:.5px}
 .field input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;color:var(--text);font-size:15px;outline:none;transition:border .2s;-webkit-appearance:none;appearance:none;color-scheme:dark}
 .field input:focus{border-color:var(--accent)}
-.field-row{display:flex;gap:10px}
-.field-row .field{flex:1}
+.field-row{display:flex;gap:10px;flex-wrap:wrap}
+.field-row .field{flex:1;min-width:140px}
 .sheet-actions{display:flex;gap:10px;margin-top:18px}
 .sheet-actions .btn{flex:1;justify-content:center}
 
@@ -255,23 +265,20 @@ body{
     </div>
   </div>
 
-  <!-- 录入视图 -->
   <section id="view-input" class="card-inner view">
     <div id="inputArea"></div>
     <div id="inputEmpty" class="empty-tip">尚未选择考试科目 · 请先到「科目」Tab 选择</div>
   </section>
 
-  <!-- 分析视图 -->
   <section id="view-analyze" class="card-inner view" style="display:none">
     <div id="analyzeArea"></div>
     <div id="analyzeEmpty" class="empty-tip">暂无成绩数据 · 请先录入</div>
   </section>
 
-  <!-- 科目视图 -->
   <section id="view-subjects" class="card-inner view" style="display:none">
     <div style="font-size:14px;color:var(--text-dim);margin-bottom:4px">选择你的考试科目</div>
     <div class="subject-grid" id="subjectGrid"></div>
-    <div class="sub-select" id="subSelectWrap" style="display:none"></div>
+    <div class="sub-select" id="subSelectWrap"></div>
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn primary" id="saveSubjectsBtn"><span class="ic">✓</span>保存科目</button>
       <button class="btn ghost" id="clearSubjectsBtn">清空</button>
@@ -301,7 +308,6 @@ body{
   const LS_CD='yanxin.cd.v1', LS_SUBJ='yanxin.subjects.v1', LS_SCORE='yanxin.scores.v1';
 
   /* =============== 题型分值数据 =============== */
-  // 各科目各部分分值；part=null 表示该科目无部分拆分
   const SUBJECTS={
     politics:{name:'政治',full:100,parts:[
       {k:'ms',label:'多选题',full:50},
@@ -338,40 +344,39 @@ body{
       {k:'gx',label:'概率',full:60}
     ]},
     mathnong:{name:'数学（农）',full:150,parts:null},
-    mathzzy:{name:'招生单位自命题理学数学',full:150,parts:null},
-    p408:{name:'408 计算机学科专业基础',full:150,parts:[
+    mathzzy:{name:'自命题理学数学',full:150,parts:null},
+    p408:{name:'408 计算机',full:150,parts:[
       {k:'cs',label:'数据结构',full:45},
       {k:'cjk',label:'计算机组成',full:45},
       {k:'wl',label:'操作系统',full:35},
       {k:'wl2',label:'计算机网络',full:25}
     ]},
-    p396:{name:'396 经济类综合能力',full:150,parts:null},
+    p396:{name:'396 经济类综合',full:150,parts:null},
     p306:{name:'306 西医综合',full:300,parts:null},
     p307:{name:'307 中医综合',full:300,parts:null},
     pCustom:{name:'自定义专业课',full:150,parts:null,customName:true}
   };
 
-  // 科目分组
   const GROUPS=[
     {label:'政治',keys:['politics']},
     {label:'英语',keys:['english1','english2']},
     {label:'数学',keys:['math1','math2','math3','mathnong','mathzzy']},
     {label:'专业课',keys:['p408','p396','p306','p307','pCustom']}
   ];
-  const GROUP_OF={};
-  GROUPS.forEach(g=>g.keys.forEach(k=>GROUP_OF[k]=g.label));
 
-  /* =============== 倒计时逻辑（沿用原实现） =============== */
+  /* =============== 工具 =============== */
+  function loadJson(k){try{const r=localStorage.getItem(k);return r?JSON.parse(r):null}catch(e){return null}}
+  function saveJson(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+  const pad=n=>String(n).padStart(2,'0');
+  function fmtDate(ts){const d=new Date(ts);return d.getFullYear()+'/'+pad(d.getMonth()+1)+'/'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())}
+  function flash(btn,txt){const old=btn.innerHTML;btn.innerHTML=txt;btn.disabled=true;setTimeout(()=>{btn.innerHTML=old;btn.disabled=false},1200)}
+
+  /* =============== 倒计时 =============== */
   function defaultExamDate(){const n=new Date();let y=n.getFullYear();let d=new Date(y,11,20,9,0,0);if(d<=n)d=new Date(y+1,11,20,9,0,0);return d}
   function defaultStartDate(){return new Date(new Date().getFullYear(),2,1,0,0,0)}
   const defaultTarget=defaultExamDate(),defaultStart=defaultStartDate();
   let cdState=loadJson(LS_CD)||{target:defaultTarget.getTime(),start:defaultStart.getTime(),name:'2027 考研初试',portrait:matchMedia('(min-width:900px)').matches};
   if(cdState.target<=cdState.start)cdState.target=defaultTarget.getTime();
-
-  function loadJson(k){try{const r=localStorage.getItem(k);return r?JSON.parse(r):null}catch(e){return null}}
-  function saveJson(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-  const pad=n=>String(n).padStart(2,'0');
-  function fmtDate(ts){const d=new Date(ts);return d.getFullYear()+'/'+pad(d.getMonth()+1)+'/'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())}
 
   function renderCd(){
     const now=Date.now();let diff=cdState.target-now;
@@ -391,20 +396,20 @@ body{
     $('cd').style.opacity=reached?'.35':'1';
   }
 
-  /* 屏幕方向 */
-  const cardInner=$('cardInner');
+  /* 屏幕方向（class 切换，避免 JS 行内样式与 CSS 媒体查询冲突） */
   function applyCdMode(){
-    if(cdState.portrait){cardInner.style.flexDirection='column';cardInner.style.alignItems='center';cardInner.style.justifyContent='flex-start';cardInner.style.gap='22px'}
-    else{cardInner.style.flexDirection='row';cardInner.style.alignItems='center';cardInner.style.justifyContent='space-between';cardInner.style.gap='28px'}
+    const card=$('cdCard');
+    card.classList.toggle('layout-landscape',!cdState.portrait);
     $('rotateLabel').textContent=cdState.portrait?'横屏':'竖屏';
+    updateHint();
   }
   function updateHint(){
     const h=$('orientationHint');
-    if(matchMedia('(max-width:640px)').matches)h.innerHTML='手机可点右上 ⟳ 切换 <b>'+(cdState.portrait?'横屏':'竖屏')+'</b> 显示';
+    if(matchMedia('(max-width:640px)').matches)h.innerHTML='点右上 ⟳ 切换 <b>'+(cdState.portrait?'横屏':'竖屏')+'</b> 显示';
     else h.innerHTML='电脑端默认横版 · 可切换竖版';
   }
-  $('rotateBtn').addEventListener('click',()=>{cdState.portrait=!cdState.portrait;cdState._follow=false;saveJson(LS_CD,cdState);applyCdMode();updateHint()});
-  function onRot(){if(cdState._follow!==false){cdState.portrait=!matchMedia('(orientation:landscape)').matches;applyCdMode();updateHint()}}
+  $('rotateBtn').addEventListener('click',()=>{cdState.portrait=!cdState.portrait;cdState._follow=false;saveJson(LS_CD,cdState);applyCdMode()});
+  function onRot(){if(cdState._follow!==false){cdState.portrait=!matchMedia('(orientation:landscape)').matches;applyCdMode()}}
   if('screen'in window&&screen.orientation&&screen.orientation.addEventListener)screen.orientation.addEventListener('change',onRot);
   window.addEventListener('orientationchange',onRot);
 
@@ -442,32 +447,26 @@ body{
 
   /* =============== 科目选择 =============== */
   let subjectSel=loadJson(LS_SUBJ)||null;
-  // subjectSel: { selected:{group:key}, customName?:string, customFull?:number }
   function getSelKey(group){return subjectSel&&subjectSel.selected?subjectSel.selected[group]:null}
-  function isCustom(){return getSelKey('subject')==null?'':getSelKey('pro')==='pCustom'}
 
   function renderSubjects(){
     const grid=$('subjectGrid');grid.innerHTML='';
     GROUPS.forEach(g=>{
       const wrap=document.createElement('div');
-      wrap.style.gridColumn='1/-1';
-      wrap.innerHTML='<div style="font-size:12px;color:var(--text-faint);letter-spacing:2px;margin:6px 0 4px">'+g.label+'</div>';
-      const inner=document.createElement('div');
-      inner.style.display='grid';inner.style.gridTemplateColumns=g.label==='专业课'?'repeat(2,1fr)':'repeat(auto-fill,minmax(110px,1fr))';inner.style.gap='8px';
+      wrap.innerHTML='<div class="sg-group-label">'+g.label+'</div>';
+      const row=document.createElement('div');
+      row.className='sg-row'+(g.keys.length>3?' multi':'');
       g.keys.forEach(k=>{
         const s=SUBJECTS[k];
         const el=document.createElement('div');
         el.className='subject-card';el.dataset.key=k;el.dataset.group=g.label;
         el.innerHTML='<span class="s-name">'+s.name+'</span><span class="s-desc">满分 '+s.full+(s.parts?' · '+s.parts.length+'部分':'')+'</span>';
         el.addEventListener('click',()=>{
-          // 单选：同组内只保留一个
           document.querySelectorAll('.subject-card').forEach(c=>{if(c.dataset.group===g.label)c.classList.remove('selected')});
           el.classList.add('selected');
-          const sel={politics:'politics',english1:'english1',english2:'english2',math1:'math1',math2:'math2',math3:'math3',mathnong:'mathnong',mathzzy:'mathzzy',p408:'p408',p396:'p396',p306:'p306',p307:'p307',pCustom:'pCustom'};
           if(!subjectSel)subjectSel={selected:{}};
           if(!subjectSel.selected)subjectSel.selected={};
           subjectSel.selected[g.label]=k;
-          // 专业课自定义名
           if(g.label==='专业课'){
             if(k==='pCustom')subjectSel.customName=subjectSel.customName||'自定义专业课';
             else delete subjectSel.customName;
@@ -475,32 +474,30 @@ body{
             renderSubSelect();
             refreshInput();
           }
-          // 英语/数学子类型
-          if(['english1','english2'].includes(k)||['math1','math2','math3','mathnong','mathzzy'].includes(k)){
+          if(['english1','english2','math1','math2','math3','mathnong','mathzzy'].includes(k)){
             saveJson(LS_SUBJ,subjectSel);refreshInput();
           }
         });
         if(getSelKey(g.label)===k)el.classList.add('selected');
-        inner.appendChild(el);
+        row.appendChild(el);
       });
-      wrap.appendChild(inner);
+      wrap.appendChild(row);
       grid.appendChild(wrap);
     });
     renderSubSelect();
   }
   function renderSubSelect(){
-    const wrap=$('subSelectWrap');wrap.innerHTML='';wrap.style.display='block';
-    // 自定义专业课名
-    const proKey=getSelKey('pro');
-    if(proKey==='pCustom'){
-      const f=document.createElement('div');f.className='field';f.style.marginTop='10px';
+    const wrap=$('subSelectWrap');wrap.innerHTML='';
+    const proKey=getSelKey('专业课');
+    if(proKey==='pCustom'&&subjectSel){
+      const f=document.createElement('div');f.className='field';
       f.innerHTML='<label>自定义专业课名称</label>';
       const inp=document.createElement('input');inp.value=subjectSel.customName||'';inp.maxLength=20;
       inp.addEventListener('input',()=>{subjectSel.customName=inp.value;saveJson(LS_SUBJ,subjectSel);refreshInput()});
       f.appendChild(inp);wrap.appendChild(f);
-    }else if(subjectSel&&subjectSel.customName){
-      const info=document.createElement('div');info.style.cssText='font-size:12px;color:var(--text-faint);margin-top:8px';
-      info.textContent='当前自定义专业课：'+subjectSel.customName;wrap.appendChild(info);
+      wrap.style.display='block';
+    }else{
+      wrap.style.display='none';
     }
   }
   $('saveSubjectsBtn').addEventListener('click',()=>{
@@ -510,17 +507,16 @@ body{
   $('clearSubjectsBtn').addEventListener('click',()=>{
     subjectSel=null;saveJson(LS_SUBJ,null);renderSubjects();refreshInput();
   });
-  function flash(btn,txt){const old=btn.innerHTML;btn.innerHTML=txt;btn.disabled=true;setTimeout(()=>{btn.innerHTML=old;btn.disabled=false},1200)}
 
   /* =============== 录入视图 =============== */
   function activeKeys(){
-    // 返回当前选中的科目 key 列表（展开专业课自定义名）
     const arr=[];
     GROUPS.forEach(g=>{
       const k=getSelKey(g.label);
       if(!k)return;
-      if(k==='pCustom'&&subjectSel&&subjectSel.customName){
-        arr.push({key:'pCustom',name:subjectSel.customName});return;
+      if(k==='pCustom'){
+        arr.push({key:'pCustom',name:(subjectSel&&subjectSel.customName)?subjectSel.customName:'自定义专业课'});
+        return;
       }
       arr.push({key:k,name:SUBJECTS[k].name});
     });
@@ -529,121 +525,112 @@ body{
   function refreshInput(){
     const area=$('inputArea');
     const hasSubjects=subjectSel&&subjectSel.selected&&Object.keys(subjectSel.selected).some(g=>subjectSel.selected[g]);
-    if(!hasSubjects){
-      area.innerHTML='';$('inputEmpty').style.display='block';return;
-    }
+    if(!hasSubjects){area.innerHTML='';$('inputEmpty').style.display='block';return}
     $('inputEmpty').style.display='none';
     const keys=activeKeys();
     if(!keys.length){area.innerHTML='';$('inputEmpty').style.display='block';return}
 
     area.innerHTML='';
-    // 录入时间
-    const tsField=document.createElement('div');tsField.className='field';tsField.style.margin='4px 0 10px';
-    tsField.innerHTML='<label>录入时间</label><input type="date" id="scoreTime" value="'+new Date().toISOString().slice(0,10)+'"/>';
-    area.appendChild(tsField);
+    const top=document.createElement('div');top.className='input-top';
+    top.innerHTML='<div class="field"><label>录入时间</label><input type="date" id="scoreTime" value="'+new Date().toISOString().slice(0,10)+'"/></div>';
+    area.appendChild(top);
 
-    // 每个科目一个 section
-    keys.forEach(({key,name})=>{
+    keys.forEach(({key})=>{
       const s=SUBJECTS[key];
       const sec=document.createElement('div');sec.className='section-block';sec.dataset.key=key;
       const head=document.createElement('h4');
-      head.innerHTML='<span>'+name+'</span><span class="full">满分 '+s.full+'</span>';
+      head.innerHTML='<span>'+s.name+'</span><span class="full">满分 '+s.full+'</span>';
       sec.appendChild(head);
-      // 总分
-      sec.appendChild(scoreRow('total',name+'总分',s.full,subjectKeyInput(key)));
+      // 总分行（高亮）
+      const totalRow=document.createElement('div');totalRow.className='score-row';totalRow.dataset.part='total';totalRow.dataset.prefix=key;totalRow.dataset.full=s.full;
+      totalRow.style.cssText='background:var(--accent-soft);border-radius:10px;padding:8px;margin:4px -8px 6px';
+      totalRow.innerHTML=
+        '<div class="lbl" style="font-weight:600;color:var(--text)">'+s.name+' 总分</div>'+
+        '<input type="number" min="0" max="'+s.full+'" step="0.5" placeholder="0" />'+
+        '<div class="full-lbl">满分 '+s.full+'</div>';
+      sec.appendChild(totalRow);
       // 各部分
       if(s.parts){
         s.parts.forEach(p=>{
-          sec.appendChild(scoreRow(p.k,name+' · '+p.label,p.full,subjectKeyInput(key)));
+          const row=document.createElement('div');row.className='score-row';row.dataset.part=p.k;row.dataset.prefix=key;row.dataset.full=p.full;
+          row.innerHTML=
+            '<div class="lbl">'+p.label+'</div>'+
+            '<input type="number" min="0" max="'+p.full+'" step="0.5" placeholder="0" />'+
+            '<div class="full-lbl">满分 '+p.full+'</div>';
+          sec.appendChild(row);
         });
-      }else{
-        const tip=document.createElement('div');tip.style.cssText='font-size:12px;color:var(--text-faint);padding:6px 0';
-        tip.textContent='该科目不支持分部分录入，仅记录总分';
-        sec.appendChild(tip);
       }
       area.appendChild(sec);
     });
 
-    // 保存按钮
-    const save=document.createElement('button');save.className='btn primary';save.style.marginTop='14px';save.style.width='100%';
+    const save=document.createElement('button');save.className='btn primary save-score-btn';
     save.innerHTML='<span class="ic">✓</span>保存成绩';
     save.addEventListener('click',saveScores);
     area.appendChild(save);
     bindScoreInputs();
   }
-  // 给每个科目一个唯一 input id 前缀
-  let _uid=0;
-  function subjectKeyInput(key){_uid++;return key+'_'+_uid}
-  function scoreRow(k,lbl,full,prefix){
-    const row=document.createElement('div');row.className='score-row';
-    row.innerHTML=
-      '<div class="lbl">'+lbl+'</div>'+
-      '<input type="number" min="0" max="'+full+'" step="0.5" data-part="'+k+'" data-full="'+full+'" data-key="'+prefix+'" placeholder="0" />'+
-      '<div class="full-lbl">满分 '+full+'</div>';
-    row.dataset.part=k;row.dataset.prefix=prefix;row.dataset.full=full;
-    return row;
-  }
   function bindScoreInputs(){
-    document.querySelectorAll('#inputArea .score-row').forEach(row=>{
-      const inp=row.querySelector('input');
-      const part=row.dataset.part;
-      const full=parseFloat(row.dataset.full);
-      const key=row.dataset.prefix;
-      // 实时校验
-      inp.addEventListener('input',()=>{
-        let v=inp.value===''?'':parseFloat(inp.value);
-        if(v<0){inp.value='0';v=0}
-        if(v>full){inp.value=String(full);v=full}
-        // 总分联动：若总分是手动输入且各部分都填了，校验
-        if(part==='total'){
-          const rows=document.querySelectorAll('.section-block[data-key="'+key.replace(/_\d+$/,'')+'"]');
-        }
+    document.querySelectorAll('#inputArea .section-block').forEach(sec=>{
+      const prefix=sec.dataset.prefix;
+      sec.querySelectorAll('.score-row').forEach(row=>{
+        const inp=row.querySelector('input');
+        const full=parseFloat(row.dataset.full);
+        const part=row.dataset.part;
+        inp.addEventListener('input',()=>{
+          let v=inp.value===''?'':parseFloat(inp.value);
+          if(v<0){inp.value='0';v=0}
+          if(v>full){inp.value=String(full);v=full}
+          // 若总分未填且所有部分都填了，自动求和
+          if(part!=='total'){
+            const totalInp=sec.querySelector('.score-row[data-part="total"] input');
+            if(totalInp&&!totalInp.value){
+              const rows=[...sec.querySelectorAll('.score-row:not([data-part="total"]) input')];
+              const filled=rows.map(i=>i.value).filter(x=>x!=='');
+              if(filled.length===rows.length&&rows.length){
+                const sum=filled.reduce((a,b)=>a+parseFloat(b),0);
+                totalInp.value=Math.min(full,sum).toString();
+              }
+            }
+          }
+        });
       });
     });
   }
 
   function saveScores(){
-    // 按 section-block 收集
-    const records=[];
+    const records=[];let err=null;
     document.querySelectorAll('#inputArea .section-block').forEach(sec=>{
-      const keyBase=sec.dataset.key; // 原始 subject key
+      const keyBase=sec.dataset.key;
       const totalEl=sec.querySelector('.score-row[data-part="total"] input');
       const total=totalEl?totalEl.value:'';
-      if(total===''){sec.style.outline='2px solid var(--warn)';return}
       sec.style.outline='none';
+      if(total===''){sec.style.outline='2px solid var(--warn)';err=err||SUBJECTS[keyBase].name+' 总分为空';return}
       const parts={};
       sec.querySelectorAll('.score-row:not([data-part="total"])').forEach(r=>{
         const v=r.querySelector('input').value;
         if(v!=='')parts[r.dataset.part]=parseFloat(v);
       });
-      // 部分和校验
       let sum=0;Object.values(parts).forEach(x=>sum+=x);
       if(Object.keys(parts).length&&Math.abs(sum-parseFloat(total))>0.01){
         sec.style.outline='2px solid var(--warn)';
-        sec.style.outlineOffset='2px';
-        alert('「'+SUBJECTS[keyBase].name+'」各部分之和 '+sum+' ≠ 总分 '+total+',请检查');
+        err=err||'「'+SUBJECTS[keyBase].name+'」各部分之和 '+sum+' ≠ 总分 '+total;
         return;
       }
-      records.push({subject:keyBase,name:(keyBase==='pCustom'?(subjectSel.customName||'自定义专业课'):SUBJECTS[keyBase].name),full:SUBJECTS[keyBase].full,total:parseFloat(total),parts});
+      records.push({subject:keyBase,name:(keyBase==='pCustom'?((subjectSel&&subjectSel.customName)||'自定义专业课'):SUBJECTS[keyBase].name),full:SUBJECTS[keyBase].full,total:parseFloat(total),parts});
     });
-    if(!records.length){alert('请至少填写一个科目的总分');return}
+    if(!records.length||err){alert(err||'请至少填写一个科目的总分');return}
     const time=$('scoreTime').value||new Date().toISOString().slice(0,10);
-    // 追加保存
     let arr=loadJson(LS_SCORE)||[];
     arr.push({id:Date.now(),time,records});
     saveJson(LS_SCORE,arr);
     renderAnalyze();
-    flash($('saveSubjectsBtn')?'':'','');
-    // 切到分析
     switchTab('analyze');
-    alert('成绩已保存，已切换到分析视图');
   }
 
   /* =============== 分析视图 =============== */
   function renderAnalyze(){
     const arr=loadJson(LS_SCORE)||[];
     if(!arr.length){$('analyzeArea').innerHTML='';$('analyzeEmpty').style.display='block';return}
-    // 取最新一条
     const rec=arr[arr.length-1];
     const area=$('analyzeArea');
     $('analyzeEmpty').style.display='none';
@@ -657,39 +644,35 @@ body{
       '<div class="meta">录入时间 '+rec.time+'<br>得分率 <b style="color:var(--text)">'+pct+'%</b></div>'+
     '</div>';
 
-    // 柱状图
-    html+='<div style="font-size:12px;color:var(--text-faint);letter-spacing:1px">各科得分率</div>';
+    html+='<div class="section-label">各科得分率</div>';
     html+='<div class="bar-chart" id="barChart">';
     rec.records.forEach(r=>{
       const p=Math.round(r.total/r.full*100);
-      html+='<div class="col"><div class="bar" style="height:0%" data-h="'+p+'"><span class="val">'+r.total+'</span><span class="pct">'+p+'%</span></div><div class="name">'+r.name+'</div></div>';
+      html+='<div class="col"><div class="bar" style="height:0%" data-h="'+p+'"><span class="val">'+r.total+'</span></div><div class="pct-label">'+p+'%</div><div class="name">'+r.name+'</div></div>';
     });
     html+='</div>';
 
-    // 雷达图
-    const parts=rec.records.filter(r=>r.parts&&Object.keys(r.parts).length);
-    if(parts.length){
-      html+='<div style="font-size:12px;color:var(--text-faint);letter-spacing:1px;margin-top:8px">各部分得分率（雷达）</div>';
+    const hasParts=rec.records.some(r=>r.parts&&Object.keys(r.parts).length);
+    if(hasParts){
+      html+='<div class="section-label">各部分得分率（雷达）</div>';
       html+='<div class="radar-wrap">'+radarSvg(rec)+'<div class="radar-caption">虚线为满分 · 实线为实际得分率</div></div>';
     }
 
-    // 明细
-    html+='<div style="font-size:12px;color:var(--text-faint);letter-spacing:1px;margin-top:14px">明细</div><div class="breakdown-list">';
+    html+='<div class="section-label">明细</div><div class="breakdown-list">';
     rec.records.forEach(r=>{
-      html+='<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px"><b>'+r.name+'</b><span style="font-variant-numeric:tabular-nums">'+r.total+' / '+r.full+'</span></div>';
+      html+='<div class="breakdown-group"><span>'+r.name+'</span><span>'+r.total+' / '+r.full+'</span></div>';
       if(r.parts&&Object.keys(r.parts).length){
-        const meta=SUBJECTS[r.subject]||SUBJECTS[r.name];
+        const meta=SUBJECTS[r.subject];
         (meta.parts||[]).forEach(p=>{
           const v=r.parts[p.k];if(v==null)return;
           const pp=Math.round(v/p.full*100);
-          html+='<div class="breakdown-item"><span class="n">· '+p.label+'</span><span class="m">'+v+' / '+p.full+'</span><span class="s">'+pp+'%</span></div>';
+          html+='<div class="breakdown-item"><span class="n">'+p.label+'</span><span class="m">'+v+' / '+p.full+'</span><span class="s">'+pp+'%</span></div>';
         });
       }
     });
     html+='</div>';
 
     area.innerHTML=html;
-    // 动画柱状
     requestAnimationFrame(()=>{
       document.querySelectorAll('#barChart .bar').forEach(b=>{b.style.height=b.dataset.h+'%'})
     });
@@ -704,13 +687,13 @@ body{
       });
     });
     if(points.length<3)return '<div class="empty-tip" style="padding:20px">部分数据不足</div>';
-    const n=points.length,size=240,cx=120,cy=120,R=90;
+    const n=points.length,cx=120,cy=120,R=90;
     const angle=i=>-Math.PI/2+i*2*Math.PI/n;
     function pt(i,frac){const a=angle(i);return [cx+R*frac*Math.cos(a),cy+R*frac*Math.sin(a)]}
     let grid='';
     for(let f=0.25;f<=1.001;f+=0.25){
       let d='';
-      for(let i=0;i<n;i++){const p=pt(i,f);d+=(i===0?'M':'L')+p[0].toFixed(1)+' '+p[1].toFixed(1)+' ';}
+      for(let i=0;i<n;i++){const p=pt(i,f);d+=(i===0?'M':'L')+p[0].toFixed(1)+' '+p[1].toFixed(1)+' '}
       d+='Z';grid+='<path d="'+d+'" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>';
     }
     let axes='';
@@ -721,7 +704,7 @@ body{
       labels+='<text x="'+p[0]+'" y="'+p[1]+'" fill="#9aa0aa" font-size="11" text-anchor="'+(p[0]<cx?'end':'middle')+'" dominant-baseline="middle">'+points[i].label+'</text>';
     }
     let poly='';
-    for(let i=0;i<n;i++){const p=pt(i,points[i].val/points[i].full);poly+=(i===0?'M':'L')+p[0].toFixed(1)+' '+p[1].toFixed(1)+' ';}
+    for(let i=0;i<n;i++){const p=pt(i,points[i].val/points[i].full);poly+=(i===0?'M':'L')+p[0].toFixed(1)+' '+p[1].toFixed(1)+' '}
     poly+='Z';
     return '<svg viewBox="0 0 240 240" width="240" height="240" xmlns="http://www.w3.org/2000/svg">'+
       '<g>'+grid+'</g><g>'+axes+'</g><g>'+labels+'</g>'+
@@ -740,7 +723,7 @@ body{
   document.querySelectorAll('.sub-nav .tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
 
   /* =============== 启动 =============== */
-  applyCdMode();updateHint();
+  applyCdMode();
   renderSubjects();refreshInput();renderCd();
   setInterval(renderCd,1000);
   switchTab('input');
