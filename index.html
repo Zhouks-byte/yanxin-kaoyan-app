@@ -41,7 +41,6 @@ body{
 .brand{display:flex;align-items:center;gap:10px}
 .brand-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ff6b5b,#ffb199);display:grid;place-items:center;font-size:18px;font-weight:700;box-shadow:0 6px 18px rgba(255,107,91,0.25)}
 .brand-name{font-size:18px;font-weight:700;letter-spacing:1px}
-.brand-tag{font-size:12px;color:var(--text-dim)}
 
 /* ============ 卡片 ============ */
 .card{
@@ -145,7 +144,7 @@ body{
 .done{font-size:18px;color:var(--ok);font-weight:500;letter-spacing:1px;margin-top:8px}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-/* 横版 row 布局（宽视口/电脑横屏/用户手动切换） */
+/* 横版 row 布局（电脑端恒横版 / 手机横屏） */
 #cdCard.layout-landscape .card-inner{
   flex-direction:row;align-items:center;justify-content:space-between;
   padding:18px 28px;gap:28px;
@@ -411,12 +410,8 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     <div class="brand-logo">研</div>
     <div>
       <div class="brand-name">研心</div>
-      <div class="brand-tag">专注 · 倒计时 · 成绩分析</div>
     </div>
   </div>
-  <button class="btn ghost" id="rotateBtn" title="切换横竖屏" aria-label="切换横竖屏">
-    <span class="ic">⟳</span><span id="rotateLabel">横屏</span>
-  </button>
 </header>
 
 <!-- ========== 倒计时卡片 ========== -->
@@ -444,7 +439,6 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
         <button class="btn primary" id="customBtn"><span class="ic">✎</span>自定义时间</button>
         <button class="btn" id="resetBtn"><span class="ic">↺</span>默认考试日</button>
       </div>
-      <div class="hint" id="orientationHint"></div>
     </div>
   </div>
 </main>
@@ -622,15 +616,18 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
   function defaultExamDate(){const n=new Date();let y=n.getFullYear();let d=new Date(y,11,20,9,0,0);if(d<=n)d=new Date(y+1,11,20,9,0,0);return d}
   function defaultStartDate(){return new Date(new Date().getFullYear(),2,1,0,0,0)}
   const defaultTarget=defaultExamDate(),defaultStart=defaultStartDate();
-  /* 方向决策：landscape=true 表示横版 row 布局，false 表示竖版 column 布局 */
+  /* 方向决策：电脑端强制横版 row 布局，手机端默认竖版 column（手机横屏时切横版） */
+  function isPhone(){return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)}
   function suggestLandscape(){
-    // 宽度够大且确实是宽扁视口 → 横版 row；否则（窄屏 / 瘦高的电脑竖屏）→ 竖版 column
+    if(!isPhone())return true;                  // 电脑端：始终横版
     const w=window.innerWidth,h=window.innerHeight;
-    const wideEnough=w>=760;                    // 宽度够大才适合横版
-    const ratioOK=w/h>=1.15;                    // 视口确实是宽的（排除电脑竖屏）
-    return wideEnough&&ratioOK;
+    return w>=760||w/h>=1.15;                   // 手机端：竖屏竖版，横屏横版
   }
-  function isPortraitDevice(){return window.innerWidth<=760}
+  /* 科目网格等全局版式仍按视口宽高决定窄/宽渲染 */
+  function suggestGridLayout(){
+    const w=window.innerWidth,h=window.innerHeight;
+    return w>=760&&w/h>=1.15;
+  }
 
   // 每次启动都按当前视口重新计算方向：电脑端默认横屏，手机端默认竖屏。
   // 旧版本存的 portrait/target_time 字段一律丢弃，避免残留状态把布局钉死。
@@ -639,8 +636,7 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     ? {target:rawCd.target,start:rawCd.start,name:rawCd.name}
     : {target:defaultTarget.getTime(),start:defaultStart.getTime(),name:'2027 考研初试'};
   if(cdState.target<=cdState.start)cdState.target=defaultTarget.getTime();
-  cdState.follow=true;                       // 启动即跟随视口
-  cdState.landscape=suggestLandscape();
+  cdState.landscape=suggestLandscape();         // 按设备决定：电脑横版 / 手机竖版
 
   function renderCd(){
     const now=Date.now();let diff=cdState.target-now;
@@ -664,42 +660,26 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
   function applyCdMode(){
     const card=$('cdCard');
     card.classList.toggle('layout-landscape',!!cdState.landscape);
-    $('rotateLabel').textContent=cdState.landscape?'竖屏':'横屏';
-    updateHint();
   }
   /* 全局版式：跟随视口，决定科目网格等窄/宽版渲染，
      使「电脑竖屏」与「手机竖屏」得到一致界面 */
   function applyLayoutMode(){
-    const wide=suggestLandscape();
+    const wide=suggestGridLayout();
     document.body.classList.toggle('mode-landscape',wide);
     document.body.classList.toggle('mode-portrait',!wide);
   }
-  function updateHint(){
-    const h=$('orientationHint');
-    const cur=cdState.landscape?'横版':'竖版';
-    h.innerHTML='当前 <b>'+cur+'</b> · 点右上 ⟳ 切换为'+(cdState.landscape?'竖版':'横版');
-  }
 
-  $('rotateBtn').addEventListener('click',()=>{
-    cdState.landscape=!cdState.landscape;
-    cdState.follow=false;            // 用户手动切换后不再跟随
-    saveJson(LS_CD,cdState);
-    applyCdMode();
-  });
-
-  // 跟随系统方向 + 窗口 resize
+  // 跟随系统方向 + 窗口 resize（电脑端恒横版；手机端随旋转切换横竖版）
   if('screen'in window&&screen.orientation&&screen.orientation.addEventListener){
     screen.orientation.addEventListener('change',()=>{
       applyLayoutMode();
       cdState.landscape=suggestLandscape();
-      cdState.follow=true;saveJson(LS_CD,cdState);
       applyCdMode();
     });
   }
   window.addEventListener('orientationchange',()=>{
     applyLayoutMode();
     cdState.landscape=suggestLandscape();
-    cdState.follow=true;saveJson(LS_CD,cdState);
     applyCdMode();
   });
   let _rzTimer;
@@ -707,11 +687,9 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     clearTimeout(_rzTimer);
     _rzTimer=setTimeout(()=>{
       applyLayoutMode();                 // 全局版式始终跟随视口
-      // 倒计时方向：视口过窄时强制竖版，否则仅在未被用户手动覆盖时跟随
-      const now=suggestLandscape();
-      if(now!==cdState.landscape&&(isPortraitDevice()||cdState.follow)){
+      const now=suggestLandscape();      // 倒计时方向：电脑恒横版，手机随视口切换
+      if(now!==cdState.landscape){
         cdState.landscape=now;
-        cdState.follow=true;
         applyCdMode();
       }
     },150);
