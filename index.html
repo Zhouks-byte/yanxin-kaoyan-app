@@ -345,6 +345,36 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 .field-row .field{flex:1;min-width:140px}
 .sheet-actions{display:flex;gap:10px;margin-top:18px}
 .sheet-actions .btn{flex:1;justify-content:center}
+
+/* ============ 确认对话框（替代原生 confirm/alert） ============ */
+.confirm-mask{
+  position:fixed;inset:0;z-index:60;
+  display:flex;align-items:center;justify-content:center;padding:24px;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  opacity:0;pointer-events:none;transition:opacity .25s ease;
+}
+.confirm-mask.open{opacity:1;pointer-events:auto}
+.confirm-box{
+  width:100%;max-width:340px;background:#1a1e27;
+  border:1px solid var(--card-stroke);border-radius:20px;
+  padding:22px 20px 18px;box-shadow:0 24px 60px rgba(0,0,0,.5);
+  transform:translateY(14px) scale(.96);opacity:0;
+  transition:transform .3s cubic-bezier(.22,1,.36,1),opacity .25s ease;
+}
+.confirm-mask.open .confirm-box{transform:none;opacity:1}
+.confirm-box .c-title{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600;letter-spacing:1px}
+.confirm-box .c-ic{
+  width:30px;height:30px;border-radius:10px;flex-shrink:0;
+  background:rgba(255,107,91,.14);border:1px solid rgba(255,107,91,.35);
+  display:grid;place-items:center;color:var(--accent);
+}
+.confirm-box .c-ic svg{width:15px;height:15px;display:block}
+.confirm-box .c-msg{margin-top:12px;font-size:13px;color:var(--text-dim);line-height:1.7;word-break:break-all}
+.confirm-box .c-hint{margin-top:6px;font-size:11px;color:var(--text-faint)}
+.confirm-box .c-acts{display:flex;gap:10px;margin-top:20px}
+.confirm-box .c-acts .btn{flex:1;justify-content:center}
+.btn.destructive{background:rgba(255,107,91,.14);border-color:rgba(255,107,91,.45);color:var(--accent)}
+.btn.destructive:hover{background:rgba(255,107,91,.24);border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -475,6 +505,22 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     <button class="btn primary" id="saveBtn">保存</button>
   </div>
 </section>
+
+<!-- 确认对话框（删除记录 / 错误提示） -->
+<div class="confirm-mask" id="confirmMask" role="alertdialog" aria-modal="true" aria-labelledby="cTitleText" aria-describedby="cMsg">
+  <div class="confirm-box">
+    <div class="c-title">
+      <span class="c-ic" id="cIcon" aria-hidden="true"></span>
+      <span id="cTitleText">删除成绩记录</span>
+    </div>
+    <div class="c-msg" id="cMsg"></div>
+    <div class="c-hint" id="cHint">该操作无法撤销</div>
+    <div class="c-acts">
+      <button class="btn ghost" type="button" id="cCancel">取消</button>
+      <button class="btn destructive" type="button" id="cOk">删除</button>
+    </div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -950,11 +996,11 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     const st=$('autoStatus');
     if(err){
       if(st){st.textContent='⚠ '+err;st.classList.add('bad')}
-      if(explicit)alert(err);
+      if(explicit)confirmDialog({title:'无法保存',msg:err,okText:'知道了',single:true,warn:true});
       return;
     }
     if(!records.length){
-      if(explicit)alert('请至少填写一个科目的成绩');
+      if(explicit)confirmDialog({title:'无法保存',msg:'请至少填写一个科目的成绩',okText:'知道了',single:true,warn:true});
       else if(st){st.textContent='录入中…';st.classList.remove('bad')}
       return;
     }
@@ -981,6 +1027,41 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     renderRecords();renderAnalyze();
     updateActions();                          // 编辑态下按钮变为「更新成绩/新增记录」
     if(explicit&&st){st.textContent='✓ 已保存 '+time;st.classList.remove('bad')}
+  }
+
+  /* =============== 确认对话框（替代原生 confirm/alert） =============== */
+  const IC_TRASH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
+  const IC_WARN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.5 20h19L12 4Z"/><path d="M12 10v5"/><path d="M12 17.4v.2"/></svg>';
+  function confirmDialog(opt){
+    return new Promise(resolve=>{
+      const mask=$('confirmMask'),okBtn=$('cOk'),cancelBtn=$('cCancel');
+      const single=!!opt.single;                       // 单按钮模式（提示类，仅「知道了」）
+      $('cTitleText').textContent=opt.title||'提示';
+      $('cMsg').textContent=opt.msg||'';
+      $('cHint').textContent=opt.hint||'';
+      $('cHint').style.display=opt.hint?'block':'none';
+      $('cIcon').innerHTML=opt.warn?IC_WARN:IC_TRASH;
+      okBtn.textContent=opt.okText||'删除';
+      cancelBtn.textContent=opt.cancelText||'取消';
+      cancelBtn.style.display=single?'none':'';
+      let closed=false;
+      const close=v=>{
+        if(closed)return;closed=true;
+        mask.classList.remove('open');
+        document.removeEventListener('keydown',onKey);
+        resolve(v);
+      };
+      const onKey=e=>{
+        if(e.key==='Escape')close(false);
+        else if(e.key==='Enter')close(true);
+      };
+      okBtn.onclick=()=>close(true);
+      cancelBtn.onclick=()=>close(false);
+      mask.onclick=e=>{if(e.target===mask)close(false)};
+      document.addEventListener('keydown',onKey);
+      mask.classList.add('open');
+      (single?okBtn:cancelBtn).focus();
+    });
   }
 
   /* =============== 记录列表（查看/编辑/删除） =============== */
@@ -1031,11 +1112,18 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       renderRecords();
       $('view-input').scrollIntoView({behavior:'smooth',block:'start'});
     }else{
-      if(!confirm('删除 '+rec.time+' 的这条成绩记录？'))return;
-      const next=arr.filter(r=>r.id!==id);
-      saveJson(LS_SCORE,next);
-      if(editingId===id){editingId=null;refreshInput()}
-      renderRecords();renderAnalyze();
+      confirmDialog({
+        title:'删除成绩记录',
+        msg:'确定删除「'+(rec.title||rec.time)+'」这条成绩记录吗？',
+        hint:'删除后无法恢复',
+        okText:'删除'
+      }).then(ok=>{
+        if(!ok)return;
+        const next=arr.filter(r=>r.id!==id);
+        saveJson(LS_SCORE,next);
+        if(editingId===id){editingId=null;refreshInput()}
+        renderRecords();renderAnalyze();
+      });
     }
   });
 
