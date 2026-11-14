@@ -184,6 +184,17 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 }
 .section-block h4{font-size:13px;color:var(--text-dim);margin-bottom:8px;letter-spacing:1px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .section-block h4 .full{color:var(--text-faint);font-weight:400}
+.section-block h4 .h4-right{display:flex;align-items:center;gap:10px}
+.calc-btn{
+  appearance:none;border:1px solid rgba(255,107,91,0.4);background:rgba(255,107,91,0.12);
+  color:var(--accent);padding:5px 12px;border-radius:9px;font-size:12px;font-weight:500;
+  cursor:pointer;transition:all .2s;min-height:30px;-webkit-tap-highlight-color:transparent;
+}
+.calc-btn:hover{background:rgba(255,107,91,0.22);border-color:var(--accent)}
+.calc-btn:active{transform:scale(.95)}
+.grand-block{background:linear-gradient(180deg,rgba(255,107,91,0.08),rgba(255,107,91,0.02));border-color:rgba(255,107,91,0.25)}
+.rec-title{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec-sub{font-size:11px;color:var(--text-faint);margin-top:2px}
 .total-row-highlight{background:var(--accent-soft);border-radius:8px;padding:4px 8px;margin-top:4px}
 .input-actions{display:flex;gap:10px;margin-top:16px}
 .input-actions .btn{flex:1;justify-content:center}
@@ -731,15 +742,27 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 
     area.innerHTML='';
     const top=document.createElement('div');top.className='input-top';
-    top.innerHTML='<div class="field"><label>录入时间</label><input type="date" id="scoreTime" value="'+new Date().toISOString().slice(0,10)+'"/></div>';
+    top.innerHTML=
+      '<div class="field"><label>录入时间</label><input type="date" id="scoreTime" value="'+new Date().toISOString().slice(0,10)+'"/></div>'+
+      '<div class="field"><label>录入内容</label><input type="text" id="recTitle" placeholder="例如：2026年考研真题" maxlength="30"/></div>';
     area.appendChild(top);
+    top.querySelector('#recTitle').addEventListener('input',scheduleAutoSave);
 
     keys.forEach(({key})=>{
       const s=SUBJECTS[key];
       const sec=document.createElement('div');sec.className='section-block';sec.dataset.key=key;
       const head=document.createElement('h4');
-      head.innerHTML='<span>'+s.name+'</span><span class="full">满分 '+s.full+'</span>';
+      head.innerHTML='<span>'+s.name+'</span>'+
+        '<span class="h4-right"><button type="button" class="calc-btn">计算总分</button>'+
+        '<span class="full">满分 '+s.full+'</span></span>';
       sec.appendChild(head);
+      head.querySelector('.calc-btn').addEventListener('click',()=>{
+        if(!s.parts){
+          setStatusMsg('「'+s.name+'」无分项 · 请直接填写总分');return;
+        }
+        if(recalcTotal(sec)){setStatusMsg('「'+s.name+'」总分已计算 ✓');scheduleAutoSave()}
+        else setStatusMsg('「'+s.name+'」分项未填齐 · 请补全后再计算',true);
+      });
       // 总分行（高亮）
       const totalRow=document.createElement('div');totalRow.className='score-row';totalRow.dataset.part='total';totalRow.dataset.prefix=key;totalRow.dataset.full=s.full;
       totalRow.style.cssText='background:var(--accent-soft);border-radius:10px;padding:8px;margin:4px -8px 6px';
@@ -761,6 +784,7 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       }
       area.appendChild(sec);
     });
+    buildGrandBlock(area,keys);   // 四科之后插入「考试总分」区块
 
     const actions=document.createElement('div');actions.className='input-actions';actions.id='inputActions';
     area.appendChild(actions);
@@ -787,33 +811,79 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     }
   }
   function bindScoreInputs(){
-    document.querySelectorAll('#inputArea .section-block').forEach(sec=>{
+    document.querySelectorAll('#inputArea .section-block[data-key]').forEach(sec=>{
       sec.querySelectorAll('.score-row').forEach(row=>{
         const inp=row.querySelector('input');
         const full=parseFloat(row.dataset.full);
-        const part=row.dataset.part;
         inp.addEventListener('input',()=>{
           let v=inp.value===''?'':parseFloat(inp.value);
           if(v<0){inp.value='0';v=0}
           if(v>full){inp.value=String(full);v=full}
-          // 智能计算：任一部分分数变化 → 实时重算该科总分
-          if(part!=='total')recalcTotal(sec);
+          // 实时求和：分项填齐后自动写入总分（与「计算总分」按钮并存）
+          if(row.dataset.part!=='total'){
+            if(!recalcTotal(sec)){
+              const t=sec.querySelector('.score-row[data-part="total"] input');
+              if(t)t.value='';
+            }
+          }
           scheduleAutoSave();
         });
       });
     });
   }
-  /* 各部分分数 → 总分实时求和（部分科目无分项时总分由用户手填） */
+  /* 各部分分数 → 总分求和；返回是否计算成功（分项未填齐返回 false） */
   function recalcTotal(sec){
     const rows=[...sec.querySelectorAll('.score-row:not([data-part="total"]) input')];
-    if(!rows.length)return;
+    if(!rows.length)return false;
     const totalInp=sec.querySelector('.score-row[data-part="total"] input');
-    if(!totalInp)return;
+    if(!totalInp)return false;
     const vals=rows.map(i=>i.value);
-    if(vals.some(x=>x==='')){totalInp.value='';return}   // 未填齐 → 总分暂空
+    if(vals.some(x=>x===''))return false;                 // 分项未填齐
     const sum=vals.reduce((a,b)=>a+parseFloat(b),0);
     const max=parseFloat(sec.querySelector('.score-row[data-part="total"]').dataset.full);
     totalInp.value=String(Math.min(sum,max));
+    return true;
+  }
+  function setStatusMsg(txt,bad){
+    const st=$('autoStatus');if(!st)return;
+    st.textContent=txt;st.classList.toggle('bad',!!bad);
+  }
+
+  /* 考试总分 = 各科总分之和（在四科区块之后插入） */
+  function buildGrandBlock(area,keys){
+    const fullSum=keys.reduce((a,{key})=>a+SUBJECTS[key].full,0);
+    const g=document.createElement('div');
+    g.className='section-block grand-block';g.id='grandBlock';
+    g.innerHTML=
+      '<h4><span>考试总分</span>'+
+      '<span class="h4-right"><button type="button" class="calc-btn" id="calcGrandBtn">计算总分</button>'+
+      '<span class="full">满分 '+fullSum+'</span></span></h4>'+
+      '<div class="score-row" data-part="grand" data-full="'+fullSum+'" style="background:var(--accent-soft);border-radius:10px;padding:8px;margin:4px -8px 0">'+
+      '<div class="lbl" style="font-weight:600;color:var(--text)">四门总成绩</div>'+
+      '<input type="number" id="grandTotal" min="0" max="'+fullSum+'" step="0.5" placeholder="0"/>'+
+      '<div class="full-lbl">满分 '+fullSum+'</div></div>';
+    area.appendChild(g);
+    g.querySelector('#calcGrandBtn').addEventListener('click',()=>{
+      const secs=[...document.querySelectorAll('#inputArea .section-block[data-key]')];
+      let sum=0,all=true;
+      secs.forEach(sec=>{
+        const t=sec.querySelector('.score-row[data-part="total"] input');
+        if(!t||t.value===''){all=false;return}
+        sum+=parseFloat(t.value);
+      });
+      if(!all||!secs.length){setStatusMsg('请先填写所有科目的总分，再计算考试总分',true);return}
+      const gi=$('grandTotal');
+      gi.value=String(Math.min(sum,fullSum));
+      setStatusMsg('考试总分已计算 ✓ 共 '+secs.length+' 科');
+      scheduleAutoSave();
+    });
+    const gi=g.querySelector('#grandTotal');
+    gi.addEventListener('input',()=>{
+      let v=gi.value===''?'':parseFloat(gi.value);
+      if(v<0){gi.value='0'}
+      if(v>fullSum){gi.value=String(fullSum)}
+      scheduleAutoSave();
+    });
   }
 
   /* =============== 自动保存（防抖） =============== */
@@ -826,7 +896,7 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 
   function collectScores(){
     const records=[];let err=null;
-    document.querySelectorAll('#inputArea .section-block').forEach(sec=>{
+    document.querySelectorAll('#inputArea .section-block[data-key]').forEach(sec=>{
       const keyBase=sec.dataset.key;
       const totalEl=sec.querySelector('.score-row[data-part="total"] input');
       const total=totalEl?totalEl.value:'';
@@ -866,15 +936,18 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       return;
     }
     const time=($('scoreTime')&&$('scoreTime').value)||new Date().toISOString().slice(0,10);
+    const title=(($('recTitle')&&$('recTitle').value)||'').trim();
+    const gi=$('grandTotal');
+    const grand=(gi&&gi.value!=='')?parseFloat(gi.value):null;
     const arr=loadJson(LS_SCORE)||[];
     if(editingId!=null){
       const i=arr.findIndex(r=>r.id===editingId);
-      if(i>=0){arr[i].time=time;arr[i].records=records}
+      if(i>=0){arr[i].time=time;arr[i].title=title;arr[i].grand=grand;arr[i].records=records}
       else{editingId=null}
     }
     if(editingId==null){
       editingId=Date.now()+Math.floor(Math.random()*1000);
-      arr.push({id:editingId,time,records});
+      arr.push({id:editingId,time,title,grand,records});
     }
     saveJson(LS_SCORE,arr);
     if(st){
@@ -897,9 +970,11 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       const sum=Math.round(r.records.reduce((s,x)=>s+x.total,0)*100)/100;
       const full=r.records.reduce((s,x)=>s+x.full,0);
       const names=r.records.map(x=>x.name).join('、');
+      const head=(r.title?r.title+' · ':'')+r.time;
+      const grandTxt=(r.grand!=null)?('考试总分 '+r.grand+' · '):'';
       return '<div class="rec-item'+(r.id===editingId?' on':'')+'" data-id="'+r.id+'">'+
-        '<div class="rec-info"><span class="rec-time">'+r.time+'</span>'+
-        '<span class="rec-total">'+sum+' / '+full+' · '+names+'</span></div>'+
+        '<div class="rec-info"><span class="rec-time">'+head+'</span>'+
+        '<span class="rec-total">'+grandTxt+sum+' / '+full+' · '+names+'</span></div>'+
         '<div class="rec-acts">'+
         '<button class="rec-btn" data-act="edit">编辑</button>'+
         '<button class="rec-btn danger" data-act="del">删除</button>'+
@@ -916,6 +991,8 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       refreshInput();                       // 重建表单
       // 回填该记录数据
       const dateInp=$('scoreTime');if(dateInp)dateInp.value=rec.time;
+      const titleInp=$('recTitle');if(titleInp)titleInp.value=rec.title||'';
+      const gi=$('grandTotal');if(gi&&rec.grand!=null)gi.value=rec.grand;
       rec.records.forEach(r=>{
         const sec=document.querySelector('#inputArea .section-block[data-key="'+r.subject+'"]');
         if(!sec)return;
