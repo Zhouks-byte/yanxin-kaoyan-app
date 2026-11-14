@@ -70,40 +70,68 @@ body{
 .btn .ic{font-size:15px}
 
 /* ============ 倒计时卡片 ============ */
+/* 默认：竖版 column 布局（适合窄屏/手机） */
 #cdCard .card-inner{
   display:flex;flex-direction:column;align-items:center;
-  padding:20px 24px;gap:16px;min-width:0;
-  transition:all .5s cubic-bezier(.4,0,.2,1);
+  padding:24px 24px;gap:18px;min-width:0;width:100%;
+  transition:all .4s cubic-bezier(.4,0,.2,1);
 }
-.cd-side{display:flex;flex-direction:column;align-items:center;min-width:0;width:100%}
+.cd-side{
+  display:flex;flex-direction:column;align-items:center;
+  min-width:0;width:100%;flex:none; /* flex:none 防止被挤压 */
+}
 .cd-label{font-size:12px;letter-spacing:3px;color:var(--text-faint);text-transform:uppercase}
-.cd-target{font-size:15px;color:var(--text-dim);font-weight:500;display:flex;align-items:center;gap:8px;margin-top:6px;max-width:100%;flex-wrap:wrap;justify-content:center}
+.cd-target{
+  font-size:15px;color:var(--text-dim);font-weight:500;
+  display:flex;align-items:center;gap:8px;margin-top:6px;
+  max-width:100%;flex-wrap:wrap;justify-content:center;
+}
 .cd-target .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);animation:pulse 2s ease-in-out infinite;flex-shrink:0}
-.cd{display:flex;align-items:baseline;gap:6px;margin-top:4px;flex-wrap:wrap;justify-content:center}
-.cd .num{font-size:clamp(52px,17vw,110px);font-weight:200;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff,#c9ced8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.cd .unit{font-size:14px;color:var(--text-dim);margin-right:10px}
-.cd .sub{font-size:clamp(18px,5.5vw,34px);font-weight:300;color:var(--text-dim);font-variant-numeric:tabular-nums}
-.cd-progress{width:100%;max-width:420px;height:4px;border-radius:4px;background:rgba(255,255,255,0.06);overflow:hidden;margin-top:12px}
+.cd{
+  display:flex;align-items:baseline;gap:6px;margin-top:6px;
+  flex-wrap:nowrap;justify-content:center;max-width:100%;
+}
+.cd .num{
+  font-size:clamp(48px,16vw,100px);font-weight:200;
+  letter-spacing:-2px;line-height:1;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg,#fff,#c9ced8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  white-space:nowrap;min-width:0;
+}
+.cd .unit{font-size:14px;color:var(--text-dim);margin-right:6px;flex-shrink:0}
+.cd .sub{font-size:clamp(18px,5.5vw,32px);font-weight:300;color:var(--text-dim);font-variant-numeric:tabular-nums;flex-shrink:0}
+.cd-progress{width:100%;max-width:400px;height:4px;border-radius:4px;background:rgba(255,255,255,0.06);overflow:hidden;margin-top:12px;flex-shrink:0}
 .cd-progress>i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#ff6b5b,#ffb199);border-radius:4px;transition:width 1s linear}
-.cd-meta{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.cd-meta{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-top:6px;flex-shrink:0}
 .cd-meta span{font-size:13px;color:var(--text-faint)}
 .cd-meta b{color:var(--text-dim);font-weight:500}
-.ctrl-side{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;max-width:460px}
+.ctrl-side{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  width:100%;max-width:460px;flex:none;
+}
 .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .hint{margin-top:2px;font-size:12px;color:var(--text-faint)}
 .done{font-size:18px;color:var(--ok);font-weight:500;letter-spacing:1px;margin-top:8px}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-/* 倒计时横屏（手机 landscape 或用户手动切换） */
+/* 横版 row 布局（宽视口/电脑横屏/用户手动切换） */
 #cdCard.layout-landscape .card-inner{
   flex-direction:row;align-items:center;justify-content:space-between;
-  padding:18px 24px;gap:20px;
+  padding:16px 24px;gap:24px;
 }
-#cdCard.layout-landscape .cd-side{order:2;align-items:flex-start;width:auto;max-width:58%;flex-shrink:1}
-#cdCard.layout-landscape .ctrl-side{order:1;align-items:flex-start;max-width:42%;flex-shrink:1}
-#cdCard.layout-landscape .cd .num{font-size:clamp(40px,10vw,76px)}
-#cdCard.layout-landscape .cd .sub{font-size:clamp(16px,4.5vw,26px)}
-#cdCard.layout-landscape .cd-progress{max-width:280px}
+#cdCard.layout-landscape .cd-side{
+  order:2;align-items:flex-start;
+  flex:1 1 55%;min-width:0;
+}
+#cdCard.layout-landscape .ctrl-side{
+  order:1;align-items:flex-start;
+  flex:0 0 auto;max-width:38%;
+}
+#cdCard.layout-landscape .cd{justify-content:flex-start}
+#cdCard.layout-landscape .cd .num{font-size:clamp(36px,9vw,72px)}
+#cdCard.layout-landscape .cd .sub{font-size:clamp(14px,4vw,22px)}
+#cdCard.layout-landscape .cd-progress{max-width:320px}
+#cdCard.layout-landscape .cd-meta{justify-content:flex-start}
 
 /* ============ 成绩卡片 ============ */
 .sub-nav{display:flex;gap:6px;flex-wrap:wrap}
@@ -375,8 +403,27 @@ body{
   function defaultExamDate(){const n=new Date();let y=n.getFullYear();let d=new Date(y,11,20,9,0,0);if(d<=n)d=new Date(y+1,11,20,9,0,0);return d}
   function defaultStartDate(){return new Date(new Date().getFullYear(),2,1,0,0,0)}
   const defaultTarget=defaultExamDate(),defaultStart=defaultStartDate();
-  let cdState=loadJson(LS_CD)||{target:defaultTarget.getTime(),start:defaultStart.getTime(),name:'2027 考研初试',portrait:matchMedia('(min-width:900px)').matches};
+  /* 方向决策：landscape=true 表示横版 row 布局，false 表示竖版 column 布局 */
+  function suggestLandscape(){
+    // 规则：宽视口（桌面横屏）或视口宽高比≥1.3 → 建议横版 row 布局
+    // 窄视口 / height >= width → 建议竖版 column 布局
+    const w=window.innerWidth,h=window.innerHeight;
+    const wideEnough=w>=760;                    // 宽度够大才适合横版
+    const ratioOK=w/h>=1.15;                    // 视口确实是宽的（不是瘦高的电脑竖窗）
+    return wideEnough&&ratioOK;
+  }
+  function isPortraitDevice(){return window.innerWidth<=760}
+
+  // localStorage 迁移：旧 v1 存过 portrait 字段，新版改用 landscape + follow
+  let rawCd=loadJson(LS_CD);
+  // 强制版本迁移：旧 portrait 字段一律丢弃，方向每次重新计算
+  cdState=rawCd&&rawCd.target?{target:rawCd.target,start:rawCd.start,target_time:rawCd.target_time,name:rawCd.name,follow:false,landscape:suggestLandscape()}:null;
+  cdState=cdState||{target:defaultTarget.getTime(),start:defaultStart.getTime(),name:'2027 考研初试',follow:false,landscape:suggestLandscape()};
   if(cdState.target<=cdState.start)cdState.target=defaultTarget.getTime();
+  // 如果没有显式保存过 follow，默认为跟随模式
+  if(cdState.follow===undefined)cdState.follow=true;
+  // follow=true 时每次启动重新计算
+  if(cdState.follow)cdState.landscape=suggestLandscape();
 
   function renderCd(){
     const now=Date.now();let diff=cdState.target-now;
@@ -396,22 +443,58 @@ body{
     $('cd').style.opacity=reached?'.35':'1';
   }
 
-  /* 屏幕方向（class 切换，避免 JS 行内样式与 CSS 媒体查询冲突） */
+  /* 应用方向：landscape=true → row 横版；false → column 竖版 */
   function applyCdMode(){
     const card=$('cdCard');
-    card.classList.toggle('layout-landscape',!cdState.portrait);
-    $('rotateLabel').textContent=cdState.portrait?'横屏':'竖屏';
+    card.classList.toggle('layout-landscape',!!cdState.landscape);
+    $('rotateLabel').textContent=cdState.landscape?'竖屏':'横屏';
     updateHint();
   }
   function updateHint(){
     const h=$('orientationHint');
-    if(matchMedia('(max-width:640px)').matches)h.innerHTML='点右上 ⟳ 切换 <b>'+(cdState.portrait?'横屏':'竖屏')+'</b> 显示';
-    else h.innerHTML='电脑端默认横版 · 可切换竖版';
+    if(isPortraitDevice()){
+      h.innerHTML='点右上 ⟳ 切换 <b>'+(cdState.landscape?'竖版':'横版')+'</b> 显示';
+    }else{
+      h.innerHTML='电脑端默认横版 · 可切换竖版';
+    }
   }
-  $('rotateBtn').addEventListener('click',()=>{cdState.portrait=!cdState.portrait;cdState._follow=false;saveJson(LS_CD,cdState);applyCdMode()});
-  function onRot(){if(cdState._follow!==false){cdState.portrait=!matchMedia('(orientation:landscape)').matches;applyCdMode()}}
-  if('screen'in window&&screen.orientation&&screen.orientation.addEventListener)screen.orientation.addEventListener('change',onRot);
-  window.addEventListener('orientationchange',onRot);
+
+  $('rotateBtn').addEventListener('click',()=>{
+    cdState.landscape=!cdState.landscape;
+    cdState.follow=false;            // 用户手动切换后不再跟随
+    saveJson(LS_CD,cdState);
+    applyCdMode();
+  });
+
+  function onViewportChange(){
+    if(cdState.follow){cdState.landscape=suggestLandscape();applyCdMode()}
+  }
+  // 跟随系统方向 + 窗口 resize
+  if('screen'in window&&screen.orientation&&screen.orientation.addEventListener){
+    screen.orientation.addEventListener('change',()=>{
+      cdState.landscape=suggestLandscape();
+      cdState.follow=true;saveJson(LS_CD,cdState);
+      applyCdMode();
+    });
+  }
+  window.addEventListener('orientationchange',()=>{
+    cdState.landscape=suggestLandscape();
+    cdState.follow=true;saveJson(LS_CD,cdState);
+    applyCdMode();
+  });
+  let _rzTimer;
+  window.addEventListener('resize',()=>{
+    clearTimeout(_rzTimer);
+    _rzTimer=setTimeout(()=>{
+      // 小屏 resize 必然是方向切换；大屏 resize 如果跨越临界也跟随
+      const now=suggestLandscape();
+      if(now!==cdState.landscape&&(isPortraitDevice()||cdState.follow)){
+        cdState.landscape=now;
+        cdState.follow=true;
+        applyCdMode();
+      }
+    },150);
+  });
 
   /* 抽屉 */
   const mask=$('mask'),sheet=$('sheet');
