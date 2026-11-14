@@ -24,7 +24,7 @@ body{
   background:radial-gradient(120% 80% at 50% 0%,#22262f 0%,#0f1115 60%);
   color:var(--text); min-height:100vh;
   display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-  padding:24px 16px calc(24px + env(safe-area-inset-bottom));
+  padding:24px 16px calc(96px + env(safe-area-inset-bottom));   /* 底部留出 Dock 栏空间 */
   overflow-x:hidden;-webkit-font-smoothing:antialiased;
 }
 
@@ -215,6 +215,59 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 .breakdown-item .s{font-variant-numeric:tabular-nums;color:var(--text);font-weight:500}
 .breakdown-item .m{color:var(--text-faint);font-size:11px}
 
+/* ============ 屏幕切换（Dock 驱动） ============ */
+/* 顺序过渡：旧卡片原位淡出（仍在文档流中，避免高度跳变）→ 新卡片自下淡入 */
+.screen{display:none}
+.screen.active{display:block;animation:screenIn .4s cubic-bezier(.22,1,.36,1) both}
+@keyframes screenIn{
+  from{opacity:0;transform:translateY(18px) scale(.985)}
+  to{opacity:1;transform:none}
+}
+.screen.leaving{display:block;animation:screenOut .22s ease both;pointer-events:none}
+@keyframes screenOut{
+  from{opacity:1;transform:none}
+  to{opacity:0;transform:translateY(-12px) scale(.99)}
+}
+
+/* ============ 底部 Dock 栏 ============ */
+.dock{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  display:flex;justify-content:center;gap:10px;
+  padding:9px 16px calc(9px + env(safe-area-inset-bottom));
+  background:rgba(15,17,21,.86);
+  -webkit-backdrop-filter:blur(20px) saturate(140%);
+  backdrop-filter:blur(20px) saturate(140%);
+  border-top:1px solid rgba(255,255,255,.07);
+  box-shadow:0 -12px 30px rgba(0,0,0,.35);
+}
+.dock-item{
+  position:relative;z-index:1;flex:1 1 0;max-width:180px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  padding:9px 6px 8px;border:none;background:transparent;cursor:pointer;
+  color:var(--text-faint);font-family:inherit;
+  border-radius:16px;-webkit-tap-highlight-color:transparent;
+  transition:color .28s ease,transform .28s cubic-bezier(.22,1,.36,1);
+}
+.dock-item:hover{color:var(--text-dim)}
+.dock-item:active{transform:scale(.94)}
+.dock-item .dock-icon{
+  display:block;width:24px;height:24px;
+  transition:transform .38s cubic-bezier(.34,1.56,.64,1),color .28s ease;
+}
+.dock-item .dock-icon svg{width:100%;height:100%;display:block}
+.dock-item .dock-label{font-size:11px;letter-spacing:.5px;line-height:1;transition:font-weight .2s}
+.dock-item.active{color:var(--text)}
+.dock-item.active .dock-icon{color:var(--accent);transform:translateY(-3px) scale(1.1)}
+.dock-item.active .dock-label{font-weight:600}
+/* 选中项高亮胶囊：滑动过渡，位于文字之下、Dock 背景之上 */
+.dock-pill{
+  position:absolute;top:6px;bottom:6px;z-index:0;border-radius:14px;
+  background:linear-gradient(180deg,rgba(255,107,91,.18),rgba(255,107,91,.06));
+  border:1px solid rgba(255,107,91,.3);
+  transition:left .42s cubic-bezier(.22,1,.36,1),width .42s cubic-bezier(.22,1,.36,1);
+  pointer-events:none;
+}
+
 /* ============ 抽屉 ============ */
 .sheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:50;opacity:0;pointer-events:none;transition:opacity .3s ease}
 .sheet-mask.open{opacity:1;pointer-events:auto}
@@ -254,7 +307,7 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 </header>
 
 <!-- ========== 倒计时卡片 ========== -->
-<main class="card" id="cdCard">
+<main class="card screen active" id="cdCard" data-screen="countdown">
   <div class="card-header">
     <span class="card-title">考研倒计时</span>
   </div>
@@ -284,7 +337,7 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 </main>
 
 <!-- ========== 成绩分析卡片 ========== -->
-<main class="card" id="scoreCard">
+<main class="card screen" id="scoreCard" data-screen="score">
   <div class="card-header">
     <span class="card-title">成绩录入 · 分析</span>
     <div class="sub-nav">
@@ -314,6 +367,38 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     </div>
   </section>
 </main>
+
+<!-- ========== 底部 Dock 栏 ========== -->
+<nav class="dock" id="dock" role="tablist" aria-label="主导航">
+  <span class="dock-pill" id="dockPill" aria-hidden="true"></span>
+  <button class="dock-item active" type="button" role="tab" aria-selected="true" data-screen="countdown">
+    <span class="dock-icon" aria-hidden="true">
+      <!-- 沙漏：上半沙漏 + 下半沙漏，表达时间流逝 -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5.5 2.5h13"/>
+        <path d="M5.5 21.5h13"/>
+        <path d="M7 2.5v4.2c0 1.9 1.2 3.5 2.9 4.1l2.1.8-2.1.8C8.2 13 7 14.6 7 16.5v4.2"/>
+        <path d="M17 2.5v4.2c0 1.9-1.2 3.5-2.9 4.1l-2.1.8 2.1.8c1.7.6 2.9 2.2 2.9 4.1v4.2"/>
+        <path d="M9.6 18.6c.7-.9 1.5-1.4 2.4-1.4s1.7.5 2.4 1.4"/>
+      </svg>
+    </span>
+    <span class="dock-label">倒计时</span>
+  </button>
+  <button class="dock-item" type="button" role="tab" aria-selected="false" data-screen="score">
+    <span class="dock-icon" aria-hidden="true">
+      <!-- 柱状图 + 上升趋势线，表达成绩分析 -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3.5 20.5h17"/>
+        <path d="M7 20.5v-5.2"/>
+        <path d="M12 20.5V8.4"/>
+        <path d="M17 20.5v-8.1"/>
+        <path d="M6.4 11.6 11 7.4l3.3 2.6 4.6-4.4"/>
+        <path d="M16.4 5.6H19v2.6"/>
+      </svg>
+    </span>
+    <span class="dock-label">成绩分析</span>
+  </button>
+</nav>
 
 <!-- 日期抽屉 -->
 <div class="sheet-mask" id="mask"></div>
@@ -808,10 +893,61 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
   }
   document.querySelectorAll('.sub-nav .tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
 
+  /* =============== 底部 Dock 切换 =============== */
+  const screens=[...document.querySelectorAll('.screen')];
+  const dockItems=[...document.querySelectorAll('.dock-item')];
+  const dockPill=$('dockPill');
+  let curScreen='countdown', switching=false;
+
+  /* 高亮胶囊跟随选中项滑动 */
+  function movePill(){
+    const active=dockItems.find(b=>b.classList.contains('active'));
+    if(!active)return;
+    const dr=$('dock').getBoundingClientRect(), ar=active.getBoundingClientRect();
+    dockPill.style.left=(ar.left-dr.left)+'px';
+    dockPill.style.width=ar.width+'px';
+  }
+
+  function switchScreen(name){
+    if(name===curScreen||switching)return;
+    const from=screens.find(s=>s.dataset.screen===curScreen);
+    const to=screens.find(s=>s.dataset.screen===name);
+    if(!to)return;
+    switching=true;
+
+    dockItems.forEach(b=>{                     // Dock 高亮立即反馈
+      const on=b.dataset.screen===name;
+      b.classList.toggle('active',on);
+      b.setAttribute('aria-selected',on?'true':'false');
+    });
+    movePill();
+
+    const showTo=()=>{
+      if(from)from.classList.remove('active','leaving');
+      to.classList.add('active');
+      curScreen=name;switching=false;
+      if(name==='score')renderAnalyze();
+      window.scrollTo({top:0,behavior:'smooth'});
+    };
+
+    if(from){                                  // 旧卡片原位淡出，结束后新卡片淡入
+      from.classList.add('leaving');
+      let done=false;
+      const show=()=>{if(done)return;done=true;showTo()};
+      from.addEventListener('animationend',show,{once:true});
+      setTimeout(show,400);                    // 兜底：动画被禁用时也能切换
+    }else{
+      showTo();
+    }
+  }
+  dockItems.forEach(b=>b.addEventListener('click',()=>switchScreen(b.dataset.screen)));
+
   /* =============== 启动 =============== */
   applyLayoutMode();
   applyCdMode();
   renderSubjects();refreshInput();renderCd();
+  movePill();
+  window.addEventListener('resize',movePill);
   setInterval(renderCd,1000);
   switchTab('input');
 })();
