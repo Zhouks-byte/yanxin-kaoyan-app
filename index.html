@@ -551,8 +551,13 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
   /* =============== 题型分值数据 =============== */
   const SUBJECTS={
     politics:{name:'政治',full:100,parts:[
-      {k:'ms',label:'多选题',full:50},
-      {k:'dk',label:'单选题',full:50}
+      {k:'dk',label:'单选题（1-16）',full:16},
+      {k:'ms',label:'多选题（17-33）',full:34},
+      {k:'fx34',label:'分析题34·马原',full:10},
+      {k:'fx35',label:'分析题35·毛中特',full:10},
+      {k:'fx36',label:'分析题36·史纲',full:10},
+      {k:'fx37',label:'分析题37·思修法基',full:10},
+      {k:'fx38',label:'分析题38·形策当代',full:10}
     ]},
     english1:{name:'英语（一）',full:100,parts:[
       {k:'yiduhua',label:'阅读理解一',full:40},
