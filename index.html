@@ -185,7 +185,29 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 .section-block h4{font-size:13px;color:var(--text-dim);margin-bottom:8px;letter-spacing:1px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .section-block h4 .full{color:var(--text-faint);font-weight:400}
 .total-row-highlight{background:var(--accent-soft);border-radius:8px;padding:4px 8px;margin-top:4px}
-.save-score-btn{width:100%;justify-content:center;margin-top:16px}
+.input-actions{display:flex;gap:10px;margin-top:16px}
+.input-actions .btn{flex:1;justify-content:center}
+.auto-status{margin-top:10px;font-size:12px;color:var(--text-faint);text-align:center;min-height:16px;transition:color .2s}
+.auto-status.bad{color:var(--warn)}
+.records-wrap{margin-top:20px;border-top:1px dashed rgba(255,255,255,0.08);padding-top:14px}
+.rec-item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
+  border-radius:14px;padding:10px 14px;margin-top:8px;
+  transition:border-color .2s,background .2s;
+}
+.rec-item.on{border-color:var(--accent);background:var(--accent-soft)}
+.rec-info{min-width:0}
+.rec-time{font-size:13px;color:var(--text)}
+.rec-total{display:block;font-size:11px;color:var(--text-faint);margin-top:2px}
+.rec-acts{display:flex;gap:6px;flex-shrink:0}
+.rec-btn{
+  appearance:none;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);
+  color:var(--text-dim);padding:7px 12px;border-radius:10px;font-size:12px;cursor:pointer;
+  transition:all .2s;min-height:34px;-webkit-tap-highlight-color:transparent;
+}
+.rec-btn:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+.rec-btn.danger:hover{border-color:rgba(255,107,91,0.5);color:var(--accent);background:rgba(255,107,91,0.12)}
 .empty-tip{color:var(--text-faint);font-size:14px;text-align:center;padding:40px 0}
 
 /* 分析 */
@@ -350,6 +372,10 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
   <section id="view-input" class="card-inner view">
     <div id="inputArea"></div>
     <div id="inputEmpty" class="empty-tip">尚未选择考试科目 · 请先到「科目」Tab 选择</div>
+    <div id="recordsWrap" class="records-wrap" style="display:none">
+      <div class="section-label" style="margin-top:0">已保存记录</div>
+      <div id="recordList"></div>
+    </div>
   </section>
 
   <section id="view-analyze" class="card-inner view" style="display:none">
@@ -680,6 +706,8 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
   });
 
   /* =============== 录入视图 =============== */
+  let editingId=null;      // 正在编辑的记录 id（null=新记录）
+  let autoTimer=null;      // 自动保存防抖计时
   function activeKeys(){
     const arr=[];
     GROUPS.forEach(g=>{
@@ -734,15 +762,32 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       area.appendChild(sec);
     });
 
-    const save=document.createElement('button');save.className='btn primary save-score-btn';
-    save.innerHTML='<span class="ic">✓</span>保存成绩';
-    save.addEventListener('click',saveScores);
-    area.appendChild(save);
+    const actions=document.createElement('div');actions.className='input-actions';actions.id='inputActions';
+    area.appendChild(actions);
+    updateActions();
+    const status=document.createElement('div');status.className='auto-status';status.id='autoStatus';
+    status.textContent=editingId!=null?'正在编辑已有记录 · 修改后自动保存':'录入后自动保存，无需手动点击';
+    area.appendChild(status);
     bindScoreInputs();
+    renderRecords();
+  }
+  /* 按钮区独立重建：保存/更新 + 编辑态下的「新增记录」 */
+  function updateActions(){
+    const actions=$('inputActions');if(!actions)return;
+    actions.innerHTML='';
+    const save=document.createElement('button');save.className='btn primary';
+    save.innerHTML='<span class="ic">✓</span>'+(editingId!=null?'更新成绩':'保存成绩');
+    save.addEventListener('click',()=>persistScores(true));
+    actions.appendChild(save);
+    if(editingId!=null){
+      const fresh=document.createElement('button');fresh.className='btn ghost';
+      fresh.innerHTML='新增记录';
+      fresh.addEventListener('click',()=>{editingId=null;refreshInput()});
+      actions.appendChild(fresh);
+    }
   }
   function bindScoreInputs(){
     document.querySelectorAll('#inputArea .section-block').forEach(sec=>{
-      const prefix=sec.dataset.prefix;
       sec.querySelectorAll('.score-row').forEach(row=>{
         const inp=row.querySelector('input');
         const full=parseFloat(row.dataset.full);
@@ -751,36 +796,50 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
           let v=inp.value===''?'':parseFloat(inp.value);
           if(v<0){inp.value='0';v=0}
           if(v>full){inp.value=String(full);v=full}
-          // 若总分未填且所有部分都填了，自动求和
-          if(part!=='total'){
-            const totalInp=sec.querySelector('.score-row[data-part="total"] input');
-            if(totalInp&&!totalInp.value){
-              const rows=[...sec.querySelectorAll('.score-row:not([data-part="total"]) input')];
-              const filled=rows.map(i=>i.value).filter(x=>x!=='');
-              if(filled.length===rows.length&&rows.length){
-                const sum=filled.reduce((a,b)=>a+parseFloat(b),0);
-                totalInp.value=Math.min(full,sum).toString();
-              }
-            }
-          }
+          // 智能计算：任一部分分数变化 → 实时重算该科总分
+          if(part!=='total')recalcTotal(sec);
+          scheduleAutoSave();
         });
       });
     });
   }
+  /* 各部分分数 → 总分实时求和（部分科目无分项时总分由用户手填） */
+  function recalcTotal(sec){
+    const rows=[...sec.querySelectorAll('.score-row:not([data-part="total"]) input')];
+    if(!rows.length)return;
+    const totalInp=sec.querySelector('.score-row[data-part="total"] input');
+    if(!totalInp)return;
+    const vals=rows.map(i=>i.value);
+    if(vals.some(x=>x==='')){totalInp.value='';return}   // 未填齐 → 总分暂空
+    const sum=vals.reduce((a,b)=>a+parseFloat(b),0);
+    const max=parseFloat(sec.querySelector('.score-row[data-part="total"]').dataset.full);
+    totalInp.value=String(Math.min(sum,max));
+  }
 
-  function saveScores(){
+  /* =============== 自动保存（防抖） =============== */
+  function scheduleAutoSave(){
+    const st=$('autoStatus');
+    if(st&&!st.classList.contains('bad'))st.textContent='录入中…';
+    clearTimeout(autoTimer);
+    autoTimer=setTimeout(()=>persistScores(false),700);
+  }
+
+  function collectScores(){
     const records=[];let err=null;
     document.querySelectorAll('#inputArea .section-block').forEach(sec=>{
       const keyBase=sec.dataset.key;
       const totalEl=sec.querySelector('.score-row[data-part="total"] input');
       const total=totalEl?totalEl.value:'';
       sec.style.outline='none';
-      if(total===''){sec.style.outline='2px solid var(--warn)';err=err||SUBJECTS[keyBase].name+' 总分为空';return}
       const parts={};
       sec.querySelectorAll('.score-row:not([data-part="total"])').forEach(r=>{
         const v=r.querySelector('input').value;
         if(v!=='')parts[r.dataset.part]=parseFloat(v);
       });
+      // 该科完全未填 → 跳过（允许只填部分科目）
+      if(total===''&&!Object.keys(parts).length)return;
+      // 分项未填齐 → 总分暂空，静默跳过该科（不视为错误）
+      if(total==='')return;
       let sum=0;Object.values(parts).forEach(x=>sum+=x);
       if(Object.keys(parts).length&&Math.abs(sum-parseFloat(total))>0.01){
         sec.style.outline='2px solid var(--warn)';
@@ -789,14 +848,94 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       }
       records.push({subject:keyBase,name:(keyBase==='pCustom'?((subjectSel&&subjectSel.customName)||'自定义专业课'):SUBJECTS[keyBase].name),full:SUBJECTS[keyBase].full,total:parseFloat(total),parts});
     });
-    if(!records.length||err){alert(err||'请至少填写一个科目的总分');return}
-    const time=$('scoreTime').value||new Date().toISOString().slice(0,10);
-    let arr=loadJson(LS_SCORE)||[];
-    arr.push({id:Date.now(),time,records});
-    saveJson(LS_SCORE,arr);
-    renderAnalyze();
-    switchTab('analyze');
+    return {records,err};
   }
+
+  function persistScores(explicit){
+    clearTimeout(autoTimer);
+    const {records,err}=collectScores();
+    const st=$('autoStatus');
+    if(err){
+      if(st){st.textContent='⚠ '+err;st.classList.add('bad')}
+      if(explicit)alert(err);
+      return;
+    }
+    if(!records.length){
+      if(explicit)alert('请至少填写一个科目的成绩');
+      else if(st){st.textContent='录入中…';st.classList.remove('bad')}
+      return;
+    }
+    const time=($('scoreTime')&&$('scoreTime').value)||new Date().toISOString().slice(0,10);
+    const arr=loadJson(LS_SCORE)||[];
+    if(editingId!=null){
+      const i=arr.findIndex(r=>r.id===editingId);
+      if(i>=0){arr[i].time=time;arr[i].records=records}
+      else{editingId=null}
+    }
+    if(editingId==null){
+      editingId=Date.now()+Math.floor(Math.random()*1000);
+      arr.push({id:editingId,time,records});
+    }
+    saveJson(LS_SCORE,arr);
+    if(st){
+      const d=new Date();
+      st.textContent='✓ 已自动保存 '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+      st.classList.remove('bad');
+    }
+    renderRecords();renderAnalyze();
+    updateActions();                          // 编辑态下按钮变为「更新成绩/新增记录」
+    if(explicit&&st){st.textContent='✓ 已保存 '+time;st.classList.remove('bad')}
+  }
+
+  /* =============== 记录列表（查看/编辑/删除） =============== */
+  function renderRecords(){
+    const wrap=$('recordsWrap'),list=$('recordList');
+    const arr=loadJson(LS_SCORE)||[];
+    if(!arr.length){wrap.style.display='none';list.innerHTML='';return}
+    wrap.style.display='block';
+    list.innerHTML=arr.slice().reverse().map(r=>{
+      const sum=Math.round(r.records.reduce((s,x)=>s+x.total,0)*100)/100;
+      const full=r.records.reduce((s,x)=>s+x.full,0);
+      const names=r.records.map(x=>x.name).join('、');
+      return '<div class="rec-item'+(r.id===editingId?' on':'')+'" data-id="'+r.id+'">'+
+        '<div class="rec-info"><span class="rec-time">'+r.time+'</span>'+
+        '<span class="rec-total">'+sum+' / '+full+' · '+names+'</span></div>'+
+        '<div class="rec-acts">'+
+        '<button class="rec-btn" data-act="edit">编辑</button>'+
+        '<button class="rec-btn danger" data-act="del">删除</button>'+
+        '</div></div>';
+    }).join('');
+  }
+  $('recordList').addEventListener('click',e=>{
+    const btn=e.target.closest('.rec-btn');if(!btn)return;
+    const id=Number(btn.closest('.rec-item').dataset.id);
+    const arr=loadJson(LS_SCORE)||[];
+    const rec=arr.find(r=>r.id===id);if(!rec)return;
+    if(btn.dataset.act==='edit'){
+      editingId=id;
+      refreshInput();                       // 重建表单
+      // 回填该记录数据
+      const dateInp=$('scoreTime');if(dateInp)dateInp.value=rec.time;
+      rec.records.forEach(r=>{
+        const sec=document.querySelector('#inputArea .section-block[data-key="'+r.subject+'"]');
+        if(!sec)return;
+        const t=sec.querySelector('.score-row[data-part="total"] input');
+        if(t)t.value=r.total;
+        Object.keys(r.parts||{}).forEach(k=>{
+          const row=sec.querySelector('.score-row[data-part="'+k+'"] input');
+          if(row)row.value=r.parts[k];
+        });
+      });
+      renderRecords();
+      $('view-input').scrollIntoView({behavior:'smooth',block:'start'});
+    }else{
+      if(!confirm('删除 '+rec.time+' 的这条成绩记录？'))return;
+      const next=arr.filter(r=>r.id!==id);
+      saveJson(LS_SCORE,next);
+      if(editingId===id){editingId=null;refreshInput()}
+      renderRecords();renderAnalyze();
+    }
+  });
 
   /* =============== 分析视图 =============== */
   function renderAnalyze(){
@@ -945,7 +1084,7 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
   /* =============== 启动 =============== */
   applyLayoutMode();
   applyCdMode();
-  renderSubjects();refreshInput();renderCd();
+  renderSubjects();refreshInput();renderRecords();renderCd();
   movePill();
   window.addEventListener('resize',movePill);
   setInterval(renderCd,1000);
