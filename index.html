@@ -16,7 +16,9 @@
   --radius:28px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
+/* 注意：不能给 html,body 设 height:100%，否则 body 被固定为视口高度，
+   flex 子项会因默认 flex-shrink:1 被压缩，再被 .card{overflow:hidden} 裁掉内容 */
+html{min-height:100%}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,sans-serif;
   background:radial-gradient(120% 80% at 50% 0%,#22262f 0%,#0f1115 60%);
@@ -31,6 +33,7 @@ body{
   width:100%;max-width:860px;
   display:flex;align-items:center;justify-content:space-between;gap:12px;
   margin-bottom:18px;flex-wrap:wrap;
+  flex-shrink:0;   /* 禁止被压缩 */
 }
 .brand{display:flex;align-items:center;gap:10px}
 .brand-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ff6b5b,#ffb199);display:grid;place-items:center;font-size:18px;font-weight:700;box-shadow:0 6px 18px rgba(255,107,91,0.25)}
@@ -46,6 +49,8 @@ body{
   box-shadow:0 24px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
   overflow:hidden;position:relative;
   margin-bottom:20px;
+  flex-shrink:0;   /* 关键：禁止 flex 压缩，否则内容会被 overflow:hidden 裁掉 */
+  flex-grow:0;
 }
 .card-header{
   display:flex;align-items:center;justify-content:space-between;gap:14px;
@@ -138,14 +143,14 @@ body{
 .sub-nav .tab{padding:8px 14px;border-radius:10px;font-size:13px;color:var(--text-dim);background:transparent;border:none;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
 .sub-nav .tab.active{background:rgba(255,255,255,0.08);color:var(--text)}
 
-/* 科目网格 */
+/* 科目网格：窄版（手机 / 电脑竖屏）2 列，宽版 3/5 列。
+   由 body.mode-* class 驱动，与倒计时方向决策同源，
+   保证「电脑竖屏」与「手机竖屏」渲染出完全相同的界面 */
 .subject-grid{margin-top:14px;display:flex;flex-direction:column;gap:14px}
 .sg-group-label{font-size:11px;color:var(--text-faint);letter-spacing:2px}
 .sg-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-@media (min-width:700px){
-  .sg-row{grid-template-columns:repeat(3,1fr)}
-  .sg-row.multi{grid-template-columns:repeat(5,1fr)}
-}
+body.mode-landscape .sg-row{grid-template-columns:repeat(3,1fr)}
+body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 .subject-card{
   background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
   border-radius:16px;padding:12px 10px;cursor:pointer;transition:all .2s;
@@ -231,10 +236,6 @@ body{
 .field-row .field{flex:1;min-width:140px}
 .sheet-actions{display:flex;gap:10px;margin-top:18px}
 .sheet-actions .btn{flex:1;justify-content:center}
-
-@media (min-width:900px){
-  .card,.app-header{max-width:860px}
-}
 </style>
 </head>
 <body>
@@ -405,25 +406,23 @@ body{
   const defaultTarget=defaultExamDate(),defaultStart=defaultStartDate();
   /* 方向决策：landscape=true 表示横版 row 布局，false 表示竖版 column 布局 */
   function suggestLandscape(){
-    // 规则：宽视口（桌面横屏）或视口宽高比≥1.3 → 建议横版 row 布局
-    // 窄视口 / height >= width → 建议竖版 column 布局
+    // 宽度够大且确实是宽扁视口 → 横版 row；否则（窄屏 / 瘦高的电脑竖屏）→ 竖版 column
     const w=window.innerWidth,h=window.innerHeight;
     const wideEnough=w>=760;                    // 宽度够大才适合横版
-    const ratioOK=w/h>=1.15;                    // 视口确实是宽的（不是瘦高的电脑竖窗）
+    const ratioOK=w/h>=1.15;                    // 视口确实是宽的（排除电脑竖屏）
     return wideEnough&&ratioOK;
   }
   function isPortraitDevice(){return window.innerWidth<=760}
 
-  // localStorage 迁移：旧 v1 存过 portrait 字段，新版改用 landscape + follow
+  // 每次启动都按当前视口重新计算方向：电脑端默认横屏，手机端默认竖屏。
+  // 旧版本存的 portrait/target_time 字段一律丢弃，避免残留状态把布局钉死。
   let rawCd=loadJson(LS_CD);
-  // 强制版本迁移：旧 portrait 字段一律丢弃，方向每次重新计算
-  cdState=rawCd&&rawCd.target?{target:rawCd.target,start:rawCd.start,target_time:rawCd.target_time,name:rawCd.name,follow:false,landscape:suggestLandscape()}:null;
-  cdState=cdState||{target:defaultTarget.getTime(),start:defaultStart.getTime(),name:'2027 考研初试',follow:false,landscape:suggestLandscape()};
+  let cdState=(rawCd&&rawCd.target)
+    ? {target:rawCd.target,start:rawCd.start,name:rawCd.name}
+    : {target:defaultTarget.getTime(),start:defaultStart.getTime(),name:'2027 考研初试'};
   if(cdState.target<=cdState.start)cdState.target=defaultTarget.getTime();
-  // 如果没有显式保存过 follow，默认为跟随模式
-  if(cdState.follow===undefined)cdState.follow=true;
-  // follow=true 时每次启动重新计算
-  if(cdState.follow)cdState.landscape=suggestLandscape();
+  cdState.follow=true;                       // 启动即跟随视口
+  cdState.landscape=suggestLandscape();
 
   function renderCd(){
     const now=Date.now();let diff=cdState.target-now;
@@ -450,13 +449,17 @@ body{
     $('rotateLabel').textContent=cdState.landscape?'竖屏':'横屏';
     updateHint();
   }
+  /* 全局版式：跟随视口，决定科目网格等窄/宽版渲染，
+     使「电脑竖屏」与「手机竖屏」得到一致界面 */
+  function applyLayoutMode(){
+    const wide=suggestLandscape();
+    document.body.classList.toggle('mode-landscape',wide);
+    document.body.classList.toggle('mode-portrait',!wide);
+  }
   function updateHint(){
     const h=$('orientationHint');
-    if(isPortraitDevice()){
-      h.innerHTML='点右上 ⟳ 切换 <b>'+(cdState.landscape?'竖版':'横版')+'</b> 显示';
-    }else{
-      h.innerHTML='电脑端默认横版 · 可切换竖版';
-    }
+    const cur=cdState.landscape?'横版':'竖版';
+    h.innerHTML='当前 <b>'+cur+'</b> · 点右上 ⟳ 切换为'+(cdState.landscape?'竖版':'横版');
   }
 
   $('rotateBtn').addEventListener('click',()=>{
@@ -466,18 +469,17 @@ body{
     applyCdMode();
   });
 
-  function onViewportChange(){
-    if(cdState.follow){cdState.landscape=suggestLandscape();applyCdMode()}
-  }
   // 跟随系统方向 + 窗口 resize
   if('screen'in window&&screen.orientation&&screen.orientation.addEventListener){
     screen.orientation.addEventListener('change',()=>{
+      applyLayoutMode();
       cdState.landscape=suggestLandscape();
       cdState.follow=true;saveJson(LS_CD,cdState);
       applyCdMode();
     });
   }
   window.addEventListener('orientationchange',()=>{
+    applyLayoutMode();
     cdState.landscape=suggestLandscape();
     cdState.follow=true;saveJson(LS_CD,cdState);
     applyCdMode();
@@ -486,7 +488,8 @@ body{
   window.addEventListener('resize',()=>{
     clearTimeout(_rzTimer);
     _rzTimer=setTimeout(()=>{
-      // 小屏 resize 必然是方向切换；大屏 resize 如果跨越临界也跟随
+      applyLayoutMode();                 // 全局版式始终跟随视口
+      // 倒计时方向：视口过窄时强制竖版，否则仅在未被用户手动覆盖时跟随
       const now=suggestLandscape();
       if(now!==cdState.landscape&&(isPortraitDevice()||cdState.follow)){
         cdState.landscape=now;
@@ -806,6 +809,7 @@ body{
   document.querySelectorAll('.sub-nav .tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
 
   /* =============== 启动 =============== */
+  applyLayoutMode();
   applyCdMode();
   renderSubjects();refreshInput();renderCd();
   setInterval(renderCd,1000);
