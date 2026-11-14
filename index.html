@@ -202,20 +202,28 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 .auto-status.bad{color:var(--warn)}
 .records-wrap{margin-top:20px;border-top:1px dashed rgba(255,255,255,0.08);padding-top:14px}
 .rec-item{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  display:flex;align-items:center;gap:12px;
   background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
-  border-radius:14px;padding:10px 14px;margin-top:8px;
+  border-radius:14px;padding:11px 12px;margin-top:8px;
   transition:border-color .2s,background .2s;
 }
-.rec-item.on{border-color:var(--accent);background:var(--accent-soft)}
-.rec-info{min-width:0}
-.rec-time{font-size:13px;color:var(--text)}
-.rec-total{display:block;font-size:11px;color:var(--text-faint);margin-top:2px}
+.rec-item.on{border-color:rgba(255,107,91,0.45);background:rgba(255,107,91,0.08)}
+.rec-score{
+  flex-shrink:0;min-width:64px;text-align:center;
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);
+  border-radius:12px;padding:7px 8px;
+}
+.rec-score b{display:block;font-size:19px;font-weight:600;line-height:1.15;color:var(--text);font-variant-numeric:tabular-nums}
+.rec-score i{font-style:normal;font-size:10px;color:var(--text-faint)}
+.rec-info{flex:1;min-width:0}
+.rec-time{display:block;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-date{font-weight:400;font-size:11px;color:var(--text-faint);margin-left:6px}
+.rec-total{display:block;font-size:11px;color:var(--text-faint);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rec-acts{display:flex;gap:6px;flex-shrink:0}
 .rec-btn{
   appearance:none;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);
-  color:var(--text-dim);padding:7px 12px;border-radius:10px;font-size:12px;cursor:pointer;
-  transition:all .2s;min-height:34px;-webkit-tap-highlight-color:transparent;
+  color:var(--text-dim);padding:6px 11px;border-radius:10px;font-size:12px;cursor:pointer;
+  transition:all .2s;min-height:30px;-webkit-tap-highlight-color:transparent;
 }
 .rec-btn:hover{background:rgba(255,255,255,0.1);color:var(--text)}
 .rec-btn.danger:hover{border-color:rgba(255,107,91,0.5);color:var(--accent);background:rgba(255,107,91,0.12)}
@@ -240,13 +248,28 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 .radar-wrap svg{max-width:260px;width:100%}
 .radar-caption{font-size:12px;color:var(--text-faint);margin-top:6px}
 
-.breakdown-list{margin-top:8px}
-.breakdown-group{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.08)}
-.breakdown-group span:last-child{font-variant-numeric:tabular-nums;color:var(--text-dim);font-weight:400}
-.breakdown-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed rgba(255,255,255,0.05);font-size:12px}
+.breakdown-list{margin-top:8px;display:flex;flex-direction:column;gap:10px}
+.breakdown-group{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.05);
+  border-radius:14px;padding:10px 14px 6px;
+}
+.breakdown-group .g-head{
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+  font-size:14px;font-weight:600;padding-bottom:4px;
+}
+.breakdown-group .g-head .g-score{
+  font-size:13px;font-weight:500;color:var(--text-dim);font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.breakdown-item{
+  display:grid;grid-template-columns:minmax(0,1fr) 56px 40px;gap:10px;align-items:center;
+  padding:7px 0;font-size:12px;border-top:1px solid rgba(255,255,255,0.04);
+}
 .breakdown-item .n{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.breakdown-item .s{font-variant-numeric:tabular-nums;color:var(--text);font-weight:500}
-.breakdown-item .m{color:var(--text-faint);font-size:11px}
+.breakdown-item .n em{font-style:normal;font-size:11px;color:var(--text-faint);margin-left:5px;font-variant-numeric:tabular-nums}
+.breakdown-item .bar{display:block;height:5px;border-radius:5px;background:rgba(255,255,255,0.07);position:relative;overflow:hidden}
+.breakdown-item .bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:linear-gradient(90deg,#ff6b5b,#ffb199)}
+.breakdown-item .m{text-align:right;font-size:11px;color:var(--text-dim);font-variant-numeric:tabular-nums}
 
 /* ============ 屏幕切换（Dock 驱动） ============ */
 /* 顺序过渡：旧卡片原位淡出（仍在文档流中，避免高度跳变）→ 新卡片自下淡入 */
@@ -969,12 +992,14 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     list.innerHTML=arr.slice().reverse().map(r=>{
       const sum=Math.round(r.records.reduce((s,x)=>s+x.total,0)*100)/100;
       const full=r.records.reduce((s,x)=>s+x.full,0);
-      const names=r.records.map(x=>x.name).join('、');
-      const head=(r.title?r.title+' · ':'')+r.time;
-      const grandTxt=(r.grand!=null)?('考试总分 '+r.grand+' · '):'';
+      const names=r.records.map(x=>x.name).join(' · ');
+      const score=(r.grand!=null)?r.grand:sum;          // 有考试总分优先展示
+      const title=r.title||'成绩记录';
       return '<div class="rec-item'+(r.id===editingId?' on':'')+'" data-id="'+r.id+'">'+
-        '<div class="rec-info"><span class="rec-time">'+head+'</span>'+
-        '<span class="rec-total">'+grandTxt+sum+' / '+full+' · '+names+'</span></div>'+
+        '<div class="rec-score"><b>'+score+'</b><i>/ '+full+'</i></div>'+
+        '<div class="rec-info">'+
+        '<span class="rec-time">'+title+'<span class="rec-date">'+r.time+'</span></span>'+
+        '<span class="rec-total">'+names+'</span></div>'+
         '<div class="rec-acts">'+
         '<button class="rec-btn" data-act="edit">编辑</button>'+
         '<button class="rec-btn danger" data-act="del">删除</button>'+
@@ -1047,15 +1072,22 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 
     html+='<div class="section-label">明细</div><div class="breakdown-list">';
     rec.records.forEach(r=>{
-      html+='<div class="breakdown-group"><span>'+r.name+'</span><span>'+r.total+' / '+r.full+'</span></div>';
+      html+='<div class="breakdown-group">'+
+        '<div class="g-head"><span>'+r.name+'</span><span class="g-score">'+r.total+' / '+r.full+'</span></div>';
       if(r.parts&&Object.keys(r.parts).length){
         const meta=SUBJECTS[r.subject];
         (meta.parts||[]).forEach(p=>{
           const v=r.parts[p.k];if(v==null)return;
           const pp=Math.round(v/p.full*100);
-          html+='<div class="breakdown-item"><span class="n">'+p.label+'</span><span class="m">'+v+' / '+p.full+'</span><span class="s">'+pp+'%</span></div>';
+          html+='<div class="breakdown-item">'+
+            '<span class="n">'+p.label+'<em>'+v+' / '+p.full+'</em></span>'+
+            '<span class="bar"><i style="width:'+pp+'%"></i></span>'+
+            '<span class="m">'+pp+'%</span></div>';
         });
+      }else{
+        html+='<div class="breakdown-item"><span class="n">仅录入总分</span><span class="bar"><i style="width:0"></i></span><span class="m">—</span></div>';
       }
+      html+='</div>';
     });
     html+='</div>';
 
