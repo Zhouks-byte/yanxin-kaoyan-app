@@ -57,7 +57,6 @@ input[type="date"]:hover,input[type="time"]:hover{border-color:rgba(255,255,255,
 .trend-box{position:relative;width:100%}
 .trend-box svg{display:block;width:100%;height:auto}
 .trend-line{transition:stroke-dashoffset .9s cubic-bezier(.4,0,.2,1)}
-.trend-line-fade{transition:opacity .6s ease .15s}
 .trend-dot{transition:opacity .5s ease .3s}
 .trend-focus{transition:opacity .15s}
 .trend-tip{
@@ -1167,7 +1166,6 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 
   /* ===== 成绩趋势折线图：总成绩一张、各科目一张（避免量纲差异互相压扁） ===== */
   const TREND_COLORS=['#60a5fa','#4ade80','#facc15','#a78bfa','#38bdf8','#fb923c','#f472b6'];
-  const TREND_DASH=['7 5','2 5','12 4 2 4','5 3 1 3','14 5','1 4','8 3 3 3'];  // 各科目不同线型，重叠时仍可区分
   let trendHidden={};   // 图例切换：被隐藏的系列 key
   function renderTrend(animate){
     const box1=$('trendBox'),box2=$('trendBox2'),lg=$('trendLegend');
@@ -1190,7 +1188,6 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
         if(!it){
           it={key:s.subject,name:s.name,
               color:TREND_COLORS[subs.length%TREND_COLORS.length],
-              dash:TREND_DASH[subs.length%TREND_DASH.length],
               vals:new Array(arr.length).fill(null)};
           subs.push(it);
         }
@@ -1209,7 +1206,7 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     }));
     /* --- 两张独立图表（各自 Y 轴自适应） --- */
     drawChart(box1,[total],arr,{animate:animate,area:true});
-    if(vis.length)drawChart(box2,vis,arr,{animate:animate,dash:true});
+    if(vis.length)drawChart(box2,vis,arr,{animate:animate});
     else box2.innerHTML='<div class="empty-tip" style="padding:22px 0">所有科目已隐藏 · 点击上方图例恢复</div>';
   }
   function drawChart(box,series,arr,opts){
@@ -1257,18 +1254,13 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       d+=' L'+px(n-1)+' '+(H-mb)+' L'+px(0)+' '+(H-mb)+' Z';
       svg+='<path d="'+d+'" fill="url(#trendFill'+box.id+')"/>';
     }
-    /* 折线 + 数据点（科目线用不同虚线线型，重叠时仍可分辨；线型线用淡入动画避免 dasharray 冲突） */
+    /* 折线 + 数据点（各科目均为实线，靠颜色区分；描线动画统一走 stroke-dashoffset） */
     series.forEach(s=>{
       const d=linePath(s.vals);
       if(!d)return;
-      const isDash=!!(opts.dash&&s.dash);
       const dotOp=(opts.animate===false)?1:0;
-      if(isDash){
-        svg+='<path class="trend-line-fade" opacity="'+dotOp+'" d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="'+s.dash+'"/>';
-      }else{
-        const off=(opts.animate===false)?0:1;
-        svg+='<path class="trend-line" pathLength="1" stroke-dashoffset="'+off+'" d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>';
-      }
+      const off=(opts.animate===false)?0:1;
+      svg+='<path class="trend-line" pathLength="1" stroke-dashoffset="'+off+'" d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>';
       s.vals.forEach((v,i)=>{
         if(v==null)return;
         svg+='<circle class="trend-dot" opacity="'+dotOp+'" cx="'+px(i).toFixed(1)+'" cy="'+py(v).toFixed(1)+'" r="'+(s.main?4:3.5)+'" fill="'+s.color+'" stroke="#15181f" stroke-width="1.6"/>';
@@ -1283,7 +1275,6 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     if(opts.animate!==false){
       requestAnimationFrame(()=>{
         box.querySelectorAll('.trend-line').forEach(p=>p.style.strokeDashoffset='0');
-        box.querySelectorAll('.trend-line-fade').forEach(p=>p.style.opacity='1');
         box.querySelectorAll('.trend-dot').forEach(p=>p.style.opacity='1');
       });
     }
