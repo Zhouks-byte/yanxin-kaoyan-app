@@ -263,9 +263,24 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 .bar-chart .col .name{font-size:11px;color:var(--text-dim);margin-top:6px;text-align:center;line-height:1.3;word-break:break-all}
 .bar-chart .pct-label{position:absolute;bottom:-16px;left:0;right:0;text-align:center;font-size:10px;color:var(--text-faint)}
 
-.radar-wrap{margin:12px 0;display:flex;flex-direction:column;align-items:center}
-.radar-wrap svg{max-width:260px;width:100%}
-.radar-caption{font-size:12px;color:var(--text-faint);margin-top:6px}
+/* 分析页：记录选择器 */
+.rec-select-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.rec-select-row .sel-label{font-size:12px;color:var(--text-faint);letter-spacing:1px;flex-shrink:0}
+#analyzeRecSel{
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  color:var(--text);border-radius:10px;padding:9px 12px;font-size:13px;outline:none;
+  max-width:100%;cursor:pointer;transition:border-color .2s;appearance:auto;
+}
+#analyzeRecSel:hover{border-color:rgba(255,255,255,0.2)}
+#analyzeRecSel:focus{border-color:var(--accent)}
+
+/* 分析页：按科目分组雷达卡片 */
+.radar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:10px}
+.radar-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:14px 12px 10px;min-width:0}
+.radar-card-title{font-size:12.5px;color:var(--text-dim);text-align:center;letter-spacing:1.5px;margin-bottom:4px;font-weight:600}
+.radar-svg{width:100%;height:auto;display:block}
+.radar-empty{font-size:12px;color:var(--text-faint);text-align:center;padding:36px 0}
+.radar-caption{font-size:12px;color:var(--text-faint);margin-top:8px}
 
 .breakdown-list{margin-top:8px;display:flex;flex-direction:column;gap:10px}
 .breakdown-group{
@@ -1020,7 +1035,7 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       st.textContent='✓ 已自动保存 '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
       st.classList.remove('bad');
     }
-    renderRecords();renderAnalyze();
+    renderRecords();analyzeId=editingId;renderAnalyze();
     updateActions();                          // 编辑态下按钮变为「更新成绩/新增记录」
     if(explicit&&st){st.textContent='✓ 已保存 '+time;st.classList.remove('bad')}
   }
@@ -1124,10 +1139,12 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
   });
 
   /* =============== 分析视图 =============== */
+  let analyzeId=null;                 // 分析页当前查看的记录 id（null=取最新）
   function renderAnalyze(){
     const arr=loadJson(LS_SCORE)||[];
-    if(!arr.length){$('analyzeArea').innerHTML='';$('analyzeEmpty').style.display='block';return}
-    const rec=arr[arr.length-1];
+    if(!arr.length){$('analyzeArea').innerHTML='';$('analyzeEmpty').style.display='block';analyzeId=null;return}
+    if(analyzeId==null||!arr.some(r=>r.id===analyzeId))analyzeId=arr[arr.length-1].id;
+    const rec=arr.find(r=>r.id===analyzeId);
     const area=$('analyzeArea');
     $('analyzeEmpty').style.display='none';
     const totalSum=rec.records.reduce((s,r)=>s+r.total,0);
@@ -1135,6 +1152,13 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     const pct=Math.round(totalSum/fullSum*100);
 
     let html='';
+    if(arr.length>1){
+      let opts='';
+      arr.forEach(r=>{
+        opts+='<option value="'+r.id+'"'+(r.id===analyzeId?' selected':'')+'>'+(r.title||'成绩记录')+' · '+r.time+'</option>';
+      });
+      html+='<div class="rec-select-row"><span class="sel-label">查看记录</span><select id="analyzeRecSel">'+opts+'</select></div>';
+    }
     html+='<div class="analyze-hero">'+
       '<div class="total"><span class="v">'+totalSum+'</span><span class="l">总分 / '+fullSum+'</span></div>'+
       '<div class="meta">录入时间 '+rec.time+'<br>得分率 <b style="color:var(--text)">'+pct+'%</b></div>'+
@@ -1148,10 +1172,19 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     });
     html+='</div>';
 
-    const hasParts=rec.records.some(r=>r.parts&&Object.keys(r.parts).length);
-    if(hasParts){
-      html+='<div class="section-label">各部分得分率（雷达）</div>';
-      html+='<div class="radar-wrap">'+radarSvg(rec)+'<div class="radar-caption">虚线为满分 · 实线为实际得分率</div></div>';
+    const groups=[];
+    rec.records.forEach(r=>{
+      if(!r.parts||!Object.keys(r.parts).length)return;
+      const meta=SUBJECTS[r.subject];if(!meta||!meta.parts)return;
+      const pts=meta.parts.filter(p=>r.parts[p.k]!=null).map(p=>({label:p.label,full:p.full,val:r.parts[p.k]}));
+      if(pts.length)groups.push({name:r.name,pts:pts});
+    });
+    if(groups.length){
+      html+='<div class="section-label">各部分得分率（雷达）</div><div class="radar-grid">';
+      groups.forEach(g=>{
+        html+='<div class="radar-card"><div class="radar-card-title">'+g.name+'</div>'+radarSvg(g.pts)+'</div>';
+      });
+      html+='</div><div class="radar-caption">虚线为满分 · 实线为实际得分率</div>';
     }
 
     html+='<div class="section-label">明细</div><div class="breakdown-list">';
@@ -1176,21 +1209,21 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     html+='</div>';
 
     area.innerHTML=html;
+    const sel=$('analyzeRecSel');
+    if(sel)sel.addEventListener('change',()=>{analyzeId=+sel.value;renderAnalyze()});
     requestAnimationFrame(()=>{
       document.querySelectorAll('#barChart .bar').forEach(b=>{b.style.height=b.dataset.h+'%'})
     });
   }
-  function radarSvg(rec){
-    const points=[];
-    rec.records.forEach(r=>{
-      if(!r.parts||!Object.keys(r.parts).length)return;
-      (SUBJECTS[r.subject].parts||[]).forEach(p=>{
-        const v=r.parts[p.k];if(v==null)return;
-        points.push({label:p.label,full:p.full,val:v});
-      });
-    });
-    if(points.length<3)return '<div class="empty-tip" style="padding:20px">部分数据不足</div>';
-    const n=points.length,cx=120,cy=120,R=90;
+  function radarSvg(points){
+    const n=points.length;
+    if(n<3)return '<div class="radar-empty">分项不足 3 项，暂不生成雷达</div>';
+    const fs=11;
+    const textW=s=>{let w=0;for(const ch of s){w+=/[\u4e00-\u9fff（）·、：]/.test(ch)?fs:fs*0.58}return w};
+    const maxW=Math.max(...points.map(p=>textW(p.label)));
+    const side=maxW+26;                       // 左右标签预留空间
+    const R=66,cx=side+R,cy=26+R;
+    const W=cx+R+side,H=cy+R+26;
     const angle=i=>-Math.PI/2+i*2*Math.PI/n;
     function pt(i,frac){const a=angle(i);return [cx+R*frac*Math.cos(a),cy+R*frac*Math.sin(a)]}
     let grid='';
@@ -1199,19 +1232,28 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       for(let i=0;i<n;i++){const p=pt(i,f);d+=(i===0?'M':'L')+p[0].toFixed(1)+' '+p[1].toFixed(1)+' '}
       d+='Z';grid+='<path d="'+d+'" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>';
     }
+    /* 满分参考：最外圈虚线 */
+    let full='';
+    {let d='';for(let i=0;i<n;i++){const p=pt(i,1);d+=(i===0?'M':'L')+p[0].toFixed(1)+' '+p[1].toFixed(1)+' '}
+    d+='Z';full='<path d="'+d+'" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-dasharray="4 4"/>'}
     let axes='';
     for(let i=0;i<n;i++){const p=pt(i,1);axes+='<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0]+'" y2="'+p[1]+'" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>'}
-    let labels='';
+    let labels='',dots='';
     for(let i=0;i<n;i++){
-      const p=pt(i,1.22);
-      labels+='<text x="'+p[0]+'" y="'+p[1]+'" fill="#9aa0aa" font-size="11" text-anchor="'+(p[0]<cx?'end':'middle')+'" dominant-baseline="middle">'+points[i].label+'</text>';
+      const a=angle(i),ca=Math.cos(a);
+      const lx=cx+(R+14)*Math.cos(a),ly=cy+(R+14)*Math.sin(a);
+      const anchor=ca>0.3?'start':(ca<-0.3?'end':'middle');
+      labels+='<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" fill="#9aa0aa" font-size="'+fs+'" text-anchor="'+anchor+'" dominant-baseline="middle">'+points[i].label+'</text>';
+      const vp=pt(i,points[i].val/points[i].full);
+      dots+='<circle cx="'+vp[0].toFixed(1)+'" cy="'+vp[1].toFixed(1)+'" r="2.5" fill="#ff6b5b"/>';
     }
     let poly='';
-    for(let i=0;i<n;i++){const p=pt(i,points[i].val/points[i].full);poly+=(i===0?'M':'L')+p[0].toFixed(1)+' '+p[1].toFixed(1)+' '}
+    for(let i=0;i<n;i++){const p=pt(i,Math.min(1,points[i].val/points[i].full));poly+=(i===0?'M':'L')+p[0].toFixed(1)+' '+p[1].toFixed(1)+' '}
     poly+='Z';
-    return '<svg viewBox="0 0 240 240" width="240" height="240" xmlns="http://www.w3.org/2000/svg">'+
-      '<g>'+grid+'</g><g>'+axes+'</g><g>'+labels+'</g>'+
-      '<path d="'+poly+'" fill="rgba(255,107,91,0.25)" stroke="#ff6b5b" stroke-width="2"/>'+
+    return '<svg viewBox="0 0 '+W.toFixed(0)+' '+H.toFixed(0)+'" xmlns="http://www.w3.org/2000/svg" class="radar-svg">'+
+      '<g>'+grid+full+'</g><g>'+axes+'</g><g>'+labels+'</g>'+
+      '<path d="'+poly+'" fill="rgba(255,107,91,0.22)" stroke="#ff6b5b" stroke-width="2" stroke-linejoin="round"/>'+
+      '<g>'+dots+'</g>'+
       '</svg>';
   }
 
