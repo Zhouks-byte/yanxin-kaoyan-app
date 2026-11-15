@@ -1214,7 +1214,7 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
   }
   function drawChart(box,series,arr,opts){
     const n=arr.length;
-    const W=760,H=300,ml=46,mr=18,mt=16,mb=40;
+    const W=760,H=300,ml=58,mr=22,mt=16,mb=58;   /* 留白加大以容纳放大后的刻度文字 */
     let maxV=0;
     series.forEach(s=>s.vals.forEach(v=>{if(v!=null&&v>maxV)maxV=v}));
     const yMax=Math.max(50,Math.ceil(maxV/50)*50);
@@ -1240,13 +1240,14 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     for(let k=0;k<=4;k++){
       const v=yMax*k/4,y=py(v);
       svg+='<line x1="'+ml+'" y1="'+y.toFixed(1)+'" x2="'+(W-mr)+'" y2="'+y.toFixed(1)+'" stroke="rgba(255,255,255,.07)" stroke-width="1"/>';
-      svg+='<text x="'+(ml-9)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="#5a606b">'+Math.round(v)+'</text>';
+      svg+='<text x="'+(ml-10)+'" y="'+(y+8).toFixed(1)+'" text-anchor="end" font-size="24" fill="#7a808c">'+Math.round(v)+'</text>';
     }
     /* X 轴标签（防重叠：按步进抽样，末条必显） */
     const step=Math.ceil(n/7);
     for(let i=0;i<n;i++){
       if(i%step!==0&&i!==n-1)continue;
-      svg+='<text x="'+px(i).toFixed(1)+'" y="'+(H-mb+20)+'" text-anchor="middle" font-size="11" fill="#5a606b">'+arr[i].time.slice(5,10)+'</text>';
+      const anc=i===0?'start':(i===n-1?'end':'middle');
+      svg+='<text x="'+px(i).toFixed(1)+'" y="'+(H-mb+42)+'" text-anchor="'+anc+'" font-size="24" fill="#7a808c">'+arr[i].time.slice(5,10)+'</text>';
     }
     /* 总成绩面积渐变 */
     const main=series.find(s=>s.main);
