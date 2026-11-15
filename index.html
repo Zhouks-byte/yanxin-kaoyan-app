@@ -41,6 +41,35 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover,
 input[type="time"]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opacity(.95)}
 input[type="date"]:hover,input[type="time"]:hover{border-color:rgba(255,255,255,0.18)}
 
+/* ============ 成绩趋势折线图 ============ */
+.trend-legend{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 12px}
+.trend-chip{
+  display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
+  border-radius:999px;padding:5px 13px;cursor:pointer;user-select:none;
+  transition:background .2s,border-color .2s,opacity .2s;-webkit-tap-highlight-color:transparent;
+}
+.trend-chip:hover{background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.16)}
+.trend-chip .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.trend-chip.off{opacity:.4}
+.trend-chip.off .dot{background:var(--text-faint)!important}
+.trend-box{position:relative;width:100%}
+.trend-box svg{display:block;width:100%;height:auto}
+.trend-line{transition:stroke-dashoffset .9s cubic-bezier(.4,0,.2,1)}
+.trend-dot{transition:opacity .5s ease .3s}
+.trend-focus{transition:opacity .15s}
+.trend-tip{
+  position:absolute;top:6px;left:0;pointer-events:none;z-index:5;display:none;
+  background:#1d212b;border:1px solid rgba(255,255,255,0.12);border-radius:10px;
+  padding:8px 11px;font-size:12px;box-shadow:0 12px 32px rgba(0,0,0,0.5);
+  min-width:132px;max-width:220px;white-space:nowrap;
+}
+.trend-tip b{display:block;font-size:11px;color:var(--text-faint);font-weight:500;margin-bottom:5px}
+.trend-tip .row{display:flex;align-items:center;justify-content:space-between;gap:14px;line-height:1.7}
+.trend-tip .row .k{display:flex;align-items:center;gap:6px;color:var(--text-dim);min-width:0;overflow:hidden;text-overflow:ellipsis}
+.trend-tip .row .k i{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.trend-tip .row .v{font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)}
+
 /* ============ 头部 ============ */
 .app-header{
   width:100%;max-width:860px;
@@ -502,6 +531,9 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     <div id="recordsWrap" class="records-wrap" style="display:none">
       <div class="section-label" style="margin-top:0">已保存记录</div>
       <div id="recordList"></div>
+      <div class="section-label">成绩趋势</div>
+      <div class="trend-legend" id="trendLegend"></div>
+      <div class="trend-box" id="trendBox"></div>
     </div>
   </section>
 
@@ -1125,6 +1157,137 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
         '<button class="rec-btn danger" data-act="del">删除</button>'+
         '</div></div>';
     }).join('');
+    renderTrend(true);
+  }
+
+  /* ===== 成绩趋势折线图（总成绩 + 各科目） ===== */
+  const TREND_COLORS=['#60a5fa','#4ade80','#facc15','#a78bfa','#38bdf8','#fb923c','#f472b6'];
+  let trendHidden={};   // 图例切换：被隐藏的系列 key
+  function renderTrend(animate){
+    const box=$('trendBox'),lg=$('trendLegend');
+    if(!box||!lg)return;
+    const arr=loadJson(LS_SCORE)||[];
+    if(arr.length<2){
+      lg.innerHTML='';
+      box.innerHTML='<div class="empty-tip" style="padding:26px 0">至少需要 2 条记录 · 录入后自动生成趋势</div>';
+      return;
+    }
+    /* --- 组装系列：总成绩 + 各科目 --- */
+    const series=[{key:'__total',name:'总成绩',color:'#ff6b5b',vals:[],main:true}];
+    arr.forEach((r,idx)=>{
+      const sum=(r.records||[]).reduce((a,b)=>a+b.total,0);
+      series[0].vals.push(r.grand!=null?r.grand:Math.round(sum*100)/100);
+      (r.records||[]).forEach(s=>{
+        let it=series.find(x=>x.key===s.subject);
+        if(!it){
+          it={key:s.subject,name:s.name,color:TREND_COLORS[(series.length-1)%TREND_COLORS.length],vals:new Array(arr.length).fill(null)};
+          series.push(it);
+        }
+        it.vals[idx]=s.total;
+      });
+    });
+    const vis=series.filter(s=>!trendHidden[s.key]);
+    /* --- 图例 --- */
+    lg.innerHTML=series.map(s=>
+      '<button type="button" class="trend-chip'+(trendHidden[s.key]?' off':'')+'" data-key="'+s.key+'">'+
+      '<span class="dot" style="background:'+s.color+'"></span>'+s.name+'</button>').join('');
+    lg.querySelectorAll('.trend-chip').forEach(c=>c.addEventListener('click',()=>{
+      const k=c.dataset.key;
+      if(trendHidden[k])delete trendHidden[k];else trendHidden[k]=1;
+      renderTrend(false);
+    }));
+    if(!vis.length){box.innerHTML='<div class="empty-tip" style="padding:26px 0">所有系列已隐藏 · 点击上方图例恢复</div>';return}
+
+    /* --- 布局参数 --- */
+    const W=760,H=300,ml=46,mr=18,mt=16,mb=40;
+    const n=arr.length;
+    let maxV=0;vis.forEach(s=>s.vals.forEach(v=>{if(v!=null&&v>maxV)maxV=v}));
+    const yMax=Math.max(100,Math.ceil(maxV/50)*50);
+    const px=i=>ml+i*(W-ml-mr)/(n-1);
+    const py=v=>H-mb-(v/yMax)*(H-mt-mb);
+    const linePath=vals=>{
+      let d='',pen=false;
+      vals.forEach((v,i)=>{
+        if(v==null){pen=false;return}
+        d+=(pen?'L':'M')+px(i).toFixed(1)+' '+py(v).toFixed(1)+' ';
+        pen=true;
+      });
+      return d.trim();
+    };
+    /* --- SVG --- */
+    let svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="成绩趋势折线图">';
+    svg+='<defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">'+
+      '<stop offset="0" stop-color="#ff6b5b" stop-opacity=".26"/>'+
+      '<stop offset="1" stop-color="#ff6b5b" stop-opacity="0"/></linearGradient></defs>';
+    /* 网格 + Y 轴标签 */
+    for(let k=0;k<=4;k++){
+      const v=yMax*k/4,y=py(v);
+      svg+='<line x1="'+ml+'" y1="'+y.toFixed(1)+'" x2="'+(W-mr)+'" y2="'+y.toFixed(1)+'" stroke="rgba(255,255,255,.07)" stroke-width="1"/>';
+      svg+='<text x="'+(ml-9)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="#5a606b">'+Math.round(v)+'</text>';
+    }
+    /* X 轴标签（防重叠：按步进抽样，末条必显） */
+    const step=Math.ceil(n/7);
+    for(let i=0;i<n;i++){
+      if(i%step!==0&&i!==n-1)continue;
+      svg+='<text x="'+px(i).toFixed(1)+'" y="'+(H-mb+20)+'" text-anchor="middle" font-size="11" fill="#5a606b">'+arr[i].time.slice(5,10)+'</text>';
+    }
+    /* 总成绩面积渐变 */
+    const main=vis.find(s=>s.main);
+    if(main){
+      let d='M'+px(0)+' '+py(main.vals[0]);
+      main.vals.forEach((v,i)=>{if(i>0&&v!=null)d+=' L'+px(i).toFixed(1)+' '+py(v).toFixed(1)});
+      d+=' L'+px(n-1)+' '+(H-mb)+' L'+px(0)+' '+(H-mb)+' Z';
+      svg+='<path d="'+d+'" fill="url(#trendFill)"/>';
+    }
+    /* 折线 + 数据点 */
+    vis.forEach(s=>{
+      const d=linePath(s.vals);
+      if(!d)return;
+      const off=(animate===false)?0:1;
+      svg+='<path class="trend-line" pathLength="1" stroke-dasharray="1" stroke-dashoffset="'+off+'" d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="'+(s.main?2.8:2)+'" stroke-linecap="round" stroke-linejoin="round"/>';
+      const dotOp=(animate===false)?1:0;
+      s.vals.forEach((v,i)=>{
+        if(v==null)return;
+        svg+='<circle class="trend-dot" opacity="'+dotOp+'" cx="'+px(i).toFixed(1)+'" cy="'+py(v).toFixed(1)+'" r="'+(s.main?4:3)+'" fill="'+s.color+'" stroke="#15181f" stroke-width="1.6"/>';
+      });
+    });
+    /* hover 层：焦点竖线 + 命中区 */
+    svg+='<line class="trend-focus" id="trendFocus" x1="0" y1="'+mt+'" x2="0" y2="'+(H-mb)+'" stroke="rgba(255,255,255,.28)" stroke-width="1" stroke-dasharray="3 4" opacity="0"/>';
+    svg+='<rect id="trendHit" x="'+ml+'" y="'+mt+'" width="'+(W-ml-mr)+'" height="'+(H-mt-mb)+'" fill="transparent" style="cursor:crosshair"/>';
+    svg+='</svg>';
+    box.innerHTML=svg;
+    /* --- 交互动画 --- */
+    if(animate!==false){
+      requestAnimationFrame(()=>{
+        box.querySelectorAll('.trend-line').forEach(p=>p.style.strokeDashoffset='0');
+        box.querySelectorAll('.trend-dot').forEach(p=>p.style.opacity='1');
+      });
+    }
+    /* --- hover：焦点线 + 浮动提示 --- */
+    const svgEl=box.querySelector('svg'),focus=box.querySelector('#trendFocus');
+    const tip=document.createElement('div');tip.className='trend-tip';box.appendChild(tip);
+    const move=e=>{
+      const rect=svgEl.getBoundingClientRect();
+      const rx=(e.clientX-rect.left)/rect.width*W;
+      let idx=Math.round((rx-ml)/((W-ml-mr)/(n-1)));
+      idx=Math.max(0,Math.min(n-1,idx));
+      const x=px(idx);
+      focus.setAttribute('x1',x);focus.setAttribute('x2',x);focus.setAttribute('opacity','1');
+      let rows='';
+      vis.forEach(s=>{
+        const v=s.vals[idx];if(v==null)return;
+        rows+='<div class="row"><span class="k"><i style="background:'+s.color+'"></i>'+s.name+'</span><span class="v">'+v+'</span></div>';
+      });
+      tip.innerHTML='<b>'+arr[idx].time.slice(0,16)+'</b>'+rows;
+      tip.style.display='block';
+      const tw=tip.offsetWidth;
+      const left=Math.min(Math.max(x/W*rect.width-tw/2,4),rect.width-tw-4);
+      tip.style.left=left+'px';
+    };
+    svgEl.addEventListener('pointermove',move);
+    svgEl.addEventListener('pointerleave',()=>{
+      focus.setAttribute('opacity','0');tip.style.display='none';
+    });
   }
   $('recordList').addEventListener('click',e=>{
     const btn=e.target.closest('.rec-btn');if(!btn)return;
