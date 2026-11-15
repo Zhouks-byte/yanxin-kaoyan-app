@@ -31,6 +31,16 @@ body{
   overflow-x:hidden;-webkit-font-smoothing:antialiased;
 }
 
+/* ============ 原生日期/时间选择器：跟随深色主题 ============ */
+input[type="date"],input[type="time"]{color-scheme:dark}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator{
+  filter:invert(1) opacity(.5);cursor:pointer;transition:filter .2s;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opacity(.95)}
+input[type="date"]:hover,input[type="time"]:hover{border-color:rgba(255,255,255,0.18)}
+
 /* ============ 头部 ============ */
 .app-header{
   width:100%;max-width:860px;
@@ -228,16 +238,14 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 }
 .rec-item.on{border-color:rgba(255,107,91,0.45);background:rgba(255,107,91,0.08)}
 .rec-score{
-  flex-shrink:0;min-width:64px;text-align:center;
-  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);
-  border-radius:12px;padding:7px 8px;
+  flex-shrink:0;min-width:60px;text-align:center;
+  background:rgba(255,107,91,0.1);border:1px solid rgba(255,107,91,0.25);
+  border-radius:12px;padding:9px 12px;
 }
-.rec-score b{display:block;font-size:19px;font-weight:600;line-height:1.15;color:var(--text);font-variant-numeric:tabular-nums}
-.rec-score i{font-style:normal;font-size:10px;color:var(--text-faint)}
+.rec-score b{display:block;font-size:20px;font-weight:600;line-height:1.15;color:var(--accent);font-variant-numeric:tabular-nums}
 .rec-info{flex:1;min-width:0}
 .rec-time{display:block;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rec-date{font-weight:400;font-size:11px;color:var(--text-faint);margin-left:6px}
-.rec-total{display:block;font-size:11px;color:var(--text-faint);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rec-acts{display:flex;gap:6px;flex-shrink:0}
 .rec-btn{
   appearance:none;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);
@@ -263,16 +271,44 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 .bar-chart .col .name{font-size:11px;color:var(--text-dim);margin-top:6px;text-align:center;line-height:1.3;word-break:break-all}
 .bar-chart .pct-label{position:absolute;bottom:-16px;left:0;right:0;text-align:center;font-size:10px;color:var(--text-faint)}
 
-/* 分析页：记录选择器 */
+/* 分析页：记录选择器（自定义下拉） */
 .rec-select-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
 .rec-select-row .sel-label{font-size:12px;color:var(--text-faint);letter-spacing:1px;flex-shrink:0}
-#analyzeRecSel{
+.dropdown{position:relative}
+.dd-trigger{
+  display:flex;align-items:center;gap:10px;
   background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
-  color:var(--text);border-radius:10px;padding:9px 12px;font-size:13px;outline:none;
-  max-width:100%;cursor:pointer;transition:border-color .2s;appearance:auto;
+  color:var(--text);border-radius:12px;padding:9px 14px;font-size:13px;cursor:pointer;
+  min-height:42px;min-width:240px;max-width:100%;transition:border-color .2s,background .2s;
+  -webkit-tap-highlight-color:transparent;
 }
-#analyzeRecSel:hover{border-color:rgba(255,255,255,0.2)}
-#analyzeRecSel:focus{border-color:var(--accent)}
+.dd-trigger:hover{border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.07)}
+.dropdown.open .dd-trigger{border-color:rgba(255,107,91,0.5);background:rgba(255,107,91,0.08)}
+.dd-trigger .dd-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto}
+.dd-trigger .dd-sub{font-size:11px;color:var(--text-faint);white-space:nowrap;flex-shrink:0;margin-left:auto}
+.dd-caret{width:12px;height:12px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.55;transition:transform .25s}
+.dropdown.open .dd-caret{transform:rotate(180deg);opacity:.9}
+.dd-menu{
+  position:absolute;top:calc(100% + 6px);left:0;z-index:40;
+  min-width:100%;max-height:250px;overflow-y:auto;
+  background:#1d212b;border:1px solid rgba(255,255,255,0.1);
+  border-radius:14px;padding:6px;box-shadow:0 18px 44px rgba(0,0,0,0.55);
+  opacity:0;transform:translateY(-8px) scale(.97);pointer-events:none;
+  transition:opacity .18s ease,transform .18s cubic-bezier(.22,.61,.36,1);
+}
+.dropdown.open .dd-menu{opacity:1;transform:none;pointer-events:auto}
+.dd-item{
+  display:flex;align-items:center;gap:10px;width:100%;
+  background:none;border:none;color:var(--text-dim);text-align:left;
+  padding:9px 10px;border-radius:9px;font-size:13px;cursor:pointer;
+  transition:background .15s,color .15s;-webkit-tap-highlight-color:transparent;
+}
+.dd-item:hover{background:rgba(255,255,255,0.07);color:var(--text)}
+.dd-item.on{color:var(--accent);background:rgba(255,107,91,0.12)}
+.dd-item .dd-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd-item .dd-sub{font-size:11px;color:var(--text-faint);flex-shrink:0}
+.dd-item.on .dd-sub{color:rgba(255,107,91,0.7)}
+.dd-check{width:14px;height:14px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* 分析页：按科目分组雷达卡片 */
 .radar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:10px}
@@ -1083,15 +1119,13 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     wrap.style.display='block';
     list.innerHTML=arr.slice().reverse().map(r=>{
       const sum=Math.round(r.records.reduce((s,x)=>s+x.total,0)*100)/100;
-      const full=r.records.reduce((s,x)=>s+x.full,0);
-      const names=r.records.map(x=>x.name).join(' · ');
       const score=(r.grand!=null)?r.grand:sum;          // 有考试总分优先展示
       const title=r.title||'成绩记录';
       return '<div class="rec-item'+(r.id===editingId?' on':'')+'" data-id="'+r.id+'">'+
-        '<div class="rec-score"><b>'+score+'</b><i>/ '+full+'</i></div>'+
+        '<div class="rec-score"><b>'+score+'</b></div>'+
         '<div class="rec-info">'+
         '<span class="rec-time">'+title+'<span class="rec-date">'+r.time+'</span></span>'+
-        '<span class="rec-total">'+names+'</span></div>'+
+        '</div>'+
         '<div class="rec-acts">'+
         '<button class="rec-btn" data-act="edit">编辑</button>'+
         '<button class="rec-btn danger" data-act="del">删除</button>'+
@@ -1153,11 +1187,22 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 
     let html='';
     if(arr.length>1){
-      let opts='';
+      const cur=rec;
+      let items='';
       arr.forEach(r=>{
-        opts+='<option value="'+r.id+'"'+(r.id===analyzeId?' selected':'')+'>'+(r.title||'成绩记录')+' · '+r.time+'</option>';
+        const on=r.id===analyzeId;
+        items+='<button type="button" class="dd-item'+(on?' on':'')+'" data-id="'+r.id+'">'+
+          '<span class="dd-name">'+(r.title||'成绩记录')+'</span><span class="dd-sub">'+r.time+'</span>'+
+          (on?'<svg class="dd-check" viewBox="0 0 16 16"><path d="M3 8.5l3.5 3.5L13 5"/></svg>':'')+'</button>';
       });
-      html+='<div class="rec-select-row"><span class="sel-label">查看记录</span><select id="analyzeRecSel">'+opts+'</select></div>';
+      html+='<div class="rec-select-row"><span class="sel-label">查看记录</span>'+
+        '<div class="dropdown" id="analyzeDropdown">'+
+        '<button type="button" class="dd-trigger" aria-haspopup="listbox" aria-expanded="false">'+
+          '<span class="dd-name">'+(cur.title||'成绩记录')+'</span><span class="dd-sub">'+cur.time+'</span>'+
+          '<svg class="dd-caret" viewBox="0 0 16 16"><path d="M3 6l5 5 5-5"/></svg>'+
+        '</button>'+
+        '<div class="dd-menu" role="listbox">'+items+'</div>'+
+        '</div></div>';
     }
     html+='<div class="analyze-hero">'+
       '<div class="total"><span class="v">'+totalSum+'</span><span class="l">总分 / '+fullSum+'</span></div>'+
@@ -1209,8 +1254,17 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     html+='</div>';
 
     area.innerHTML=html;
-    const sel=$('analyzeRecSel');
-    if(sel)sel.addEventListener('change',()=>{analyzeId=+sel.value;renderAnalyze()});
+    const dd=$('analyzeDropdown');
+    if(dd){
+      dd.querySelector('.dd-trigger').addEventListener('click',e=>{
+        e.stopPropagation();
+        const open=dd.classList.toggle('open');
+        dd.querySelector('.dd-trigger').setAttribute('aria-expanded',open?'true':'false');
+      });
+      dd.querySelectorAll('.dd-item').forEach(it=>{
+        it.addEventListener('click',()=>{analyzeId=+it.dataset.id;renderAnalyze()});
+      });
+    }
     requestAnimationFrame(()=>{
       document.querySelectorAll('#barChart .bar').forEach(b=>{b.style.height=b.dataset.h+'%'})
     });
@@ -1347,6 +1401,26 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
   window.addEventListener('resize',movePill);
   setInterval(renderCd,1000);
   switchTab('input');
+
+  /* =============== 全局交互：下拉关闭 / 原生日期时间选择器 =============== */
+  document.addEventListener('click',()=>{
+    document.querySelectorAll('.dropdown.open').forEach(d=>{
+      d.classList.remove('open');
+      const t=d.querySelector('.dd-trigger');if(t)t.setAttribute('aria-expanded','false');
+    });
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      document.querySelectorAll('.dropdown.open').forEach(d=>d.classList.remove('open'));
+    }
+  });
+  /* 点击日期/时间输入框任意位置直接弹出选择器（比只点小图标更友好） */
+  document.addEventListener('click',e=>{
+    const t=e.target;
+    if(t&&t.tagName==='INPUT'&&(t.type==='date'||t.type==='time')){
+      try{if(typeof t.showPicker==='function')t.showPicker()}catch(err){}
+    }
+  });
 })();
 </script>
 </body>
