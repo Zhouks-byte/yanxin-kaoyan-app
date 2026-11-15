@@ -561,8 +561,6 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     <div class="field"><label for="fDate">目标日期</label><input type="date" id="fDate"/></div>
     <div class="field"><label for="fTime">开始时间</label><input type="time" id="fTime" value="09:00"/></div>
   </div>
-  <div class="field"><label>考试名称（可选）</label><input type="text" id="fName" placeholder="例：2027 考研初试" maxlength="20"/></div>
-  <div class="field"><label>起始日期（用于计算「已坚持」）</label><input type="date" id="fStart"/></div>
   <div class="sheet-actions">
     <button class="btn ghost" id="cancelBtn">取消</button>
     <button class="btn primary" id="saveBtn">保存</button>
@@ -743,8 +741,6 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     const t=new Date(cdState.target);
     $('fDate').valueAsDate=t;
     $('fTime').value=pad(t.getHours())+':'+pad(t.getMinutes());
-    $('fName').value=cdState.name||'';
-    $('fStart').valueAsDate=new Date(cdState.start);
     mask.classList.add('open');sheet.classList.add('open');
   }
   function closeSheet(){mask.classList.remove('open');sheet.classList.remove('open')}
@@ -759,9 +755,7 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     const [hh,mi]=($('fTime').value||'09:00').split(':').map(Number);
     const target=new Date(yy,mm-1,dd,hh||9,mi||0);
     cdState.target=target.getTime();
-    const nv=$('fName').value.trim();if(nv)cdState.name=nv;
-    const ss=$('fStart').value;
-    if(ss){const [sy,sm,sd]=ss.split('-').map(Number);const st=new Date(sy,sm-1,sd,0,0,0);if(st<target)cdState.start=st.getTime()}
+    if(cdState.start>=cdState.target)cdState.start=cdState.target-86400000;  // 起始早于目标，保证进度正常
     saveJson(LS_CD,cdState);renderCd();closeSheet();
   });
   $('resetBtn').addEventListener('click',()=>{
