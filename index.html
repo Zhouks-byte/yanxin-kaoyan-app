@@ -42,20 +42,22 @@ input[type="time"]::-webkit-calendar-picker-indicator:hover{filter:invert(1) opa
 input[type="date"]:hover,input[type="time"]:hover{border-color:rgba(255,255,255,0.18)}
 
 /* ============ 成绩趋势折线图 ============ */
-.trend-legend{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 12px}
+.trend-cap{font-size:12px;color:var(--text-faint);letter-spacing:2px;margin:4px 0 10px}
+.trend-legend{display:flex;flex-wrap:wrap;gap:9px;margin:0 0 12px}
 .trend-chip{
-  display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);
+  display:inline-flex;align-items:center;gap:7px;font-size:15px;font-weight:500;color:var(--text-dim);
   background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
-  border-radius:999px;padding:5px 13px;cursor:pointer;user-select:none;
+  border-radius:999px;padding:9px 17px;cursor:pointer;user-select:none;min-height:40px;
   transition:background .2s,border-color .2s,opacity .2s;-webkit-tap-highlight-color:transparent;
 }
 .trend-chip:hover{background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.16)}
-.trend-chip .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.trend-chip .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
 .trend-chip.off{opacity:.4}
 .trend-chip.off .dot{background:var(--text-faint)!important}
 .trend-box{position:relative;width:100%}
 .trend-box svg{display:block;width:100%;height:auto}
 .trend-line{transition:stroke-dashoffset .9s cubic-bezier(.4,0,.2,1)}
+.trend-line-fade{transition:opacity .6s ease .15s}
 .trend-dot{transition:opacity .5s ease .3s}
 .trend-focus{transition:opacity .15s}
 .trend-tip{
@@ -532,8 +534,11 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       <div class="section-label" style="margin-top:0">已保存记录</div>
       <div id="recordList"></div>
       <div class="section-label">成绩趋势</div>
-      <div class="trend-legend" id="trendLegend"></div>
+      <div class="trend-cap">总成绩</div>
       <div class="trend-box" id="trendBox"></div>
+      <div class="trend-cap">各科目</div>
+      <div class="trend-legend" id="trendLegend"></div>
+      <div class="trend-box" id="trendBox2"></div>
     </div>
   </section>
 
@@ -1160,35 +1165,41 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     renderTrend(true);
   }
 
-  /* ===== 成绩趋势折线图（总成绩 + 各科目） ===== */
+  /* ===== 成绩趋势折线图：总成绩一张、各科目一张（避免量纲差异互相压扁） ===== */
   const TREND_COLORS=['#60a5fa','#4ade80','#facc15','#a78bfa','#38bdf8','#fb923c','#f472b6'];
+  const TREND_DASH=['7 5','2 5','12 4 2 4','5 3 1 3','14 5','1 4','8 3 3 3'];  // 各科目不同线型，重叠时仍可区分
   let trendHidden={};   // 图例切换：被隐藏的系列 key
   function renderTrend(animate){
-    const box=$('trendBox'),lg=$('trendLegend');
-    if(!box||!lg)return;
+    const box1=$('trendBox'),box2=$('trendBox2'),lg=$('trendLegend');
+    if(!box1||!box2||!lg)return;
     const arr=loadJson(LS_SCORE)||[];
     if(arr.length<2){
       lg.innerHTML='';
-      box.innerHTML='<div class="empty-tip" style="padding:26px 0">至少需要 2 条记录 · 录入后自动生成趋势</div>';
+      box1.innerHTML='<div class="empty-tip" style="padding:26px 0">至少需要 2 条记录 · 录入后自动生成趋势</div>';
+      box2.innerHTML='';
       return;
     }
     /* --- 组装系列：总成绩 + 各科目 --- */
-    const series=[{key:'__total',name:'总成绩',color:'#ff6b5b',vals:[],main:true}];
+    const total={key:'__total',name:'总成绩',color:'#ff6b5b',vals:[],main:true};
+    const subs=[];
     arr.forEach((r,idx)=>{
       const sum=(r.records||[]).reduce((a,b)=>a+b.total,0);
-      series[0].vals.push(r.grand!=null?r.grand:Math.round(sum*100)/100);
+      total.vals.push(r.grand!=null?r.grand:Math.round(sum*100)/100);
       (r.records||[]).forEach(s=>{
-        let it=series.find(x=>x.key===s.subject);
+        let it=subs.find(x=>x.key===s.subject);
         if(!it){
-          it={key:s.subject,name:s.name,color:TREND_COLORS[(series.length-1)%TREND_COLORS.length],vals:new Array(arr.length).fill(null)};
-          series.push(it);
+          it={key:s.subject,name:s.name,
+              color:TREND_COLORS[subs.length%TREND_COLORS.length],
+              dash:TREND_DASH[subs.length%TREND_DASH.length],
+              vals:new Array(arr.length).fill(null)};
+          subs.push(it);
         }
         it.vals[idx]=s.total;
       });
     });
-    const vis=series.filter(s=>!trendHidden[s.key]);
-    /* --- 图例 --- */
-    lg.innerHTML=series.map(s=>
+    const vis=subs.filter(s=>!trendHidden[s.key]);
+    /* --- 图例（大字号，手机可读） --- */
+    lg.innerHTML=subs.map(s=>
       '<button type="button" class="trend-chip'+(trendHidden[s.key]?' off':'')+'" data-key="'+s.key+'">'+
       '<span class="dot" style="background:'+s.color+'"></span>'+s.name+'</button>').join('');
     lg.querySelectorAll('.trend-chip').forEach(c=>c.addEventListener('click',()=>{
@@ -1196,13 +1207,17 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       if(trendHidden[k])delete trendHidden[k];else trendHidden[k]=1;
       renderTrend(false);
     }));
-    if(!vis.length){box.innerHTML='<div class="empty-tip" style="padding:26px 0">所有系列已隐藏 · 点击上方图例恢复</div>';return}
-
-    /* --- 布局参数 --- */
-    const W=760,H=300,ml=46,mr=18,mt=16,mb=40;
+    /* --- 两张独立图表（各自 Y 轴自适应） --- */
+    drawChart(box1,[total],arr,{animate:animate,area:true});
+    if(vis.length)drawChart(box2,vis,arr,{animate:animate,dash:true});
+    else box2.innerHTML='<div class="empty-tip" style="padding:22px 0">所有科目已隐藏 · 点击上方图例恢复</div>';
+  }
+  function drawChart(box,series,arr,opts){
     const n=arr.length;
-    let maxV=0;vis.forEach(s=>s.vals.forEach(v=>{if(v!=null&&v>maxV)maxV=v}));
-    const yMax=Math.max(100,Math.ceil(maxV/50)*50);
+    const W=760,H=300,ml=46,mr=18,mt=16,mb=40;
+    let maxV=0;
+    series.forEach(s=>s.vals.forEach(v=>{if(v!=null&&v>maxV)maxV=v}));
+    const yMax=Math.max(50,Math.ceil(maxV/50)*50);
     const px=i=>ml+i*(W-ml-mr)/(n-1);
     const py=v=>H-mb-(v/yMax)*(H-mt-mb);
     const linePath=vals=>{
@@ -1216,9 +1231,11 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
     };
     /* --- SVG --- */
     let svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="成绩趋势折线图">';
-    svg+='<defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">'+
-      '<stop offset="0" stop-color="#ff6b5b" stop-opacity=".26"/>'+
-      '<stop offset="1" stop-color="#ff6b5b" stop-opacity="0"/></linearGradient></defs>';
+    if(opts.area){
+      svg+='<defs><linearGradient id="trendFill'+box.id+'" x1="0" y1="0" x2="0" y2="1">'+
+        '<stop offset="0" stop-color="#ff6b5b" stop-opacity=".26"/>'+
+        '<stop offset="1" stop-color="#ff6b5b" stop-opacity="0"/></linearGradient></defs>';
+    }
     /* 网格 + Y 轴标签 */
     for(let k=0;k<=4;k++){
       const v=yMax*k/4,y=py(v);
@@ -1232,39 +1249,45 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       svg+='<text x="'+px(i).toFixed(1)+'" y="'+(H-mb+20)+'" text-anchor="middle" font-size="11" fill="#5a606b">'+arr[i].time.slice(5,10)+'</text>';
     }
     /* 总成绩面积渐变 */
-    const main=vis.find(s=>s.main);
-    if(main){
+    const main=series.find(s=>s.main);
+    if(opts.area&&main){
       let d='M'+px(0)+' '+py(main.vals[0]);
       main.vals.forEach((v,i)=>{if(i>0&&v!=null)d+=' L'+px(i).toFixed(1)+' '+py(v).toFixed(1)});
       d+=' L'+px(n-1)+' '+(H-mb)+' L'+px(0)+' '+(H-mb)+' Z';
-      svg+='<path d="'+d+'" fill="url(#trendFill)"/>';
+      svg+='<path d="'+d+'" fill="url(#trendFill'+box.id+')"/>';
     }
-    /* 折线 + 数据点 */
-    vis.forEach(s=>{
+    /* 折线 + 数据点（科目线用不同虚线线型，重叠时仍可分辨；线型线用淡入动画避免 dasharray 冲突） */
+    series.forEach(s=>{
       const d=linePath(s.vals);
       if(!d)return;
-      const off=(animate===false)?0:1;
-      svg+='<path class="trend-line" pathLength="1" stroke-dasharray="1" stroke-dashoffset="'+off+'" d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="'+(s.main?2.8:2)+'" stroke-linecap="round" stroke-linejoin="round"/>';
-      const dotOp=(animate===false)?1:0;
+      const isDash=!!(opts.dash&&s.dash);
+      const dotOp=(opts.animate===false)?1:0;
+      if(isDash){
+        svg+='<path class="trend-line-fade" opacity="'+dotOp+'" d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="'+s.dash+'"/>';
+      }else{
+        const off=(opts.animate===false)?0:1;
+        svg+='<path class="trend-line" pathLength="1" stroke-dashoffset="'+off+'" d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>';
+      }
       s.vals.forEach((v,i)=>{
         if(v==null)return;
-        svg+='<circle class="trend-dot" opacity="'+dotOp+'" cx="'+px(i).toFixed(1)+'" cy="'+py(v).toFixed(1)+'" r="'+(s.main?4:3)+'" fill="'+s.color+'" stroke="#15181f" stroke-width="1.6"/>';
+        svg+='<circle class="trend-dot" opacity="'+dotOp+'" cx="'+px(i).toFixed(1)+'" cy="'+py(v).toFixed(1)+'" r="'+(s.main?4:3.5)+'" fill="'+s.color+'" stroke="#15181f" stroke-width="1.6"/>';
       });
     });
     /* hover 层：焦点竖线 + 命中区 */
-    svg+='<line class="trend-focus" id="trendFocus" x1="0" y1="'+mt+'" x2="0" y2="'+(H-mb)+'" stroke="rgba(255,255,255,.28)" stroke-width="1" stroke-dasharray="3 4" opacity="0"/>';
-    svg+='<rect id="trendHit" x="'+ml+'" y="'+mt+'" width="'+(W-ml-mr)+'" height="'+(H-mt-mb)+'" fill="transparent" style="cursor:crosshair"/>';
+    svg+='<line class="trend-focus" x1="0" y1="'+mt+'" x2="0" y2="'+(H-mb)+'" stroke="rgba(255,255,255,.28)" stroke-width="1" stroke-dasharray="3 4" opacity="0"/>';
+    svg+='<rect x="'+ml+'" y="'+mt+'" width="'+(W-ml-mr)+'" height="'+(H-mt-mb)+'" fill="transparent" style="cursor:crosshair"/>';
     svg+='</svg>';
     box.innerHTML=svg;
     /* --- 交互动画 --- */
-    if(animate!==false){
+    if(opts.animate!==false){
       requestAnimationFrame(()=>{
         box.querySelectorAll('.trend-line').forEach(p=>p.style.strokeDashoffset='0');
+        box.querySelectorAll('.trend-line-fade').forEach(p=>p.style.opacity='1');
         box.querySelectorAll('.trend-dot').forEach(p=>p.style.opacity='1');
       });
     }
     /* --- hover：焦点线 + 浮动提示 --- */
-    const svgEl=box.querySelector('svg'),focus=box.querySelector('#trendFocus');
+    const svgEl=box.querySelector('svg'),focus=box.querySelector('.trend-focus');
     const tip=document.createElement('div');tip.className='trend-tip';box.appendChild(tip);
     const move=e=>{
       const rect=svgEl.getBoundingClientRect();
@@ -1274,7 +1297,7 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       const x=px(idx);
       focus.setAttribute('x1',x);focus.setAttribute('x2',x);focus.setAttribute('opacity','1');
       let rows='';
-      vis.forEach(s=>{
+      series.forEach(s=>{
         const v=s.vals[idx];if(v==null)return;
         rows+='<div class="row"><span class="k"><i style="background:'+s.color+'"></i>'+s.name+'</span><span class="v">'+v+'</span></div>';
       });
