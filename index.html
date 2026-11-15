@@ -58,7 +58,6 @@ body{
   display:flex;align-items:center;justify-content:space-between;gap:14px;
   padding:18px 20px;flex-wrap:wrap;
 }
-.card-title{font-size:13px;letter-spacing:2px;color:var(--text-faint);text-transform:uppercase}
 .card-inner{padding:8px 20px 22px}
 
 .btn{
@@ -84,7 +83,7 @@ body{
   background:radial-gradient(closest-side,rgba(255,107,91,.15),rgba(255,107,91,0) 70%);
 }
 #cdCard.layout-landscape::before{left:64%}
-#cdCard .card-header,#cdCard .card-inner{position:relative;z-index:1}
+#cdCard .card-inner{position:relative;z-index:1}
 
 /* 默认：竖版 column 布局（适合窄屏/手机） */
 #cdCard .card-inner{
@@ -410,9 +409,6 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 
 <!-- ========== 倒计时卡片 ========== -->
 <main class="card screen active" id="cdCard" data-screen="countdown">
-  <div class="card-header">
-    <span class="card-title">考研倒计时</span>
-  </div>
   <div class="card-inner" id="cardInner">
     <div class="cd-side">
       <div class="cd-target"><span class="dot"></span><span id="targetLabel">距离考研还有</span></div>
@@ -435,7 +431,6 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
 <!-- ========== 成绩分析卡片 ========== -->
 <main class="card screen" id="scoreCard" data-screen="score">
   <div class="card-header">
-    <span class="card-title">成绩录入 · 分析</span>
     <div class="sub-nav">
       <button class="tab active" data-tab="input">录入</button>
       <button class="tab" data-tab="analyze">分析</button>
@@ -1213,12 +1208,35 @@ body.mode-landscape .sg-row.multi{grid-template-columns:repeat(5,1fr)}
       '</svg>';
   }
 
-  /* =============== Tab 切换 =============== */
+  /* =============== Tab 切换（淡入淡出 + 位移过渡） =============== */
+  const views={input:$('view-input'),analyze:$('view-analyze'),subjects:$('view-subjects')};
+  let curTab='input';
   function switchTab(name){
+    if(!views[name])return;
     document.querySelectorAll('.sub-nav .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
-    $('view-input').style.display=name==='input'?'block':'none';
-    $('view-analyze').style.display=name==='analyze'?'block':'none';
-    $('view-subjects').style.display=name==='subjects'?'block':'none';
+    if(name===curTab){ if(name==='analyze')renderAnalyze(); return; }
+    const out=views[curTab], inn=views[name];
+    curTab=name;
+    if(out){
+      out.style.transition='opacity .16s ease, transform .16s ease';
+      out.style.opacity='0';
+      out.style.transform='translateY(-8px)';
+      setTimeout(()=>{
+        if(out===views[curTab])return;            /* 若期间切回该视图则保持显示 */
+        out.style.display='none';
+        out.style.opacity=''; out.style.transform=''; out.style.transition='';
+      },160);
+    }
+    if(inn){
+      inn.style.display='block';
+      inn.style.transition='none';
+      inn.style.opacity='0';
+      inn.style.transform='translateY(14px)';
+      void inn.offsetHeight;                      /* 强制回流，确保起始状态生效 */
+      inn.style.transition='opacity .3s ease, transform .3s cubic-bezier(.22,.61,.36,1)';
+      inn.style.opacity='1';
+      inn.style.transform='translateY(0)';
+    }
     if(name==='analyze')renderAnalyze();
   }
   document.querySelectorAll('.sub-nav .tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
